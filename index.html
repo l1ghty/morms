@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Worms 2D: Tactical Annihilation</title>
+  <meta name="description" content="A pixel-perfect turn-based artillery game with deformable terrain, realistic wind, gravity physics, and a rich arsenal of weapons. Built using HTML5 Canvas and Vanilla JavaScript.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Press+Start+2P&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Main Game Container -->
+    <div id="game-container" class="game-container">
+      <!-- Game Canvas -->
+      <canvas id="game-canvas"></canvas>
+
+      <!-- Glassmorphic HUD overlay -->
+      <div id="game-hud" class="game-hud hidden">
+        <!-- Top HUD Panel -->
+        <div class="hud-top">
+          <!-- Active Team & Worm Info -->
+          <div class="hud-panel active-worm-panel">
+            <h2 id="active-team-name">Red Team</h2>
+            <div class="worm-meta">
+              <span id="active-worm-name">Wormy</span>
+              <div class="worm-health-bar-container">
+                <div id="active-worm-health-bar" class="worm-health-bar"></div>
+              </div>
+              <span id="active-worm-health-text">100 HP</span>
+            </div>
+          </div>
+
+          <!-- Turn Timer -->
+          <div class="hud-panel timer-panel">
+            <span class="hud-label">TIME LEFT</span>
+            <span id="turn-timer">45</span>
+          </div>
+
+          <!-- Wind Indicator -->
+          <div class="hud-panel wind-panel">
+            <span class="hud-label">WIND</span>
+            <div class="wind-gauge-container">
+              <div id="wind-direction-arrow" class="wind-arrow"></div>
+              <div class="wind-bar-wrapper">
+                <div id="wind-bar" class="wind-bar"></div>
+              </div>
+            </div>
+            <span id="wind-text">0 km/h</span>
+          </div>
+        </div>
+
+        <!-- Weapon & Power controls at bottom -->
+        <div class="hud-bottom">
+          <!-- Active Weapon Panel -->
+          <div class="hud-panel weapon-status-panel" id="weapon-hud-btn" title="Click to open Weapon Selector (or press Tab)">
+            <span class="hud-label">WEAPON</span>
+            <span id="active-weapon-name-display" class="highlight-text">Bazooka</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2px; gap: 10px;">
+              <span id="weapon-ammo-display">∞</span>
+              <span id="weapon-timer-display" class="hidden" style="color: var(--text-accent); font-weight: bold; font-size: 0.85rem; border: 1px solid var(--text-accent); border-radius: 4px; padding: 1px 6px; text-shadow: 0 0 5px rgba(245, 158, 11, 0.3);">3s Fuse</span>
+            </div>
+          </div>
+
+          <!-- Fire Charge Bar -->
+          <div class="hud-panel charge-panel">
+            <span class="hud-label">WEAPON POWER (HOLD SPACE)</span>
+            <div class="charge-bar-wrapper">
+              <div id="charge-bar" class="charge-bar"></div>
+            </div>
+          </div>
+
+          <!-- Test Control Panel -->
+          <div class="hud-panel debug-controls-panel" style="pointer-events: auto; min-width: 320px;">
+            <span class="hud-label">TEST CONTROLS</span>
+            <div class="debug-btn-group" style="display: flex; gap: 6px; margin-top: 6px;">
+              <button id="btn-walk-left" class="btn btn-secondary" style="padding: 6px 10px; font-size: 0.8rem; border-radius: 6px; flex-grow: 1;">◀ Walk</button>
+              <button id="btn-walk-right" class="btn btn-secondary" style="padding: 6px 10px; font-size: 0.8rem; border-radius: 6px; flex-grow: 1;">Walk ▶</button>
+              <button id="btn-jump" class="btn btn-secondary" style="padding: 6px 10px; font-size: 0.8rem; border-radius: 6px; flex-grow: 1;">Jump</button>
+              <button id="btn-backflip" class="btn btn-secondary" style="padding: 6px 10px; font-size: 0.8rem; border-radius: 6px; flex-grow: 1;">Backflip</button>
+              <button id="btn-drop-damage" class="btn btn-primary" style="padding: 6px 10px; font-size: 0.8rem; border-radius: 6px; background: #e11d48; border-color: #be123c; flex-grow: 2; box-shadow: 0 4px 14px rgba(225, 29, 72, 0.3);">Drop & Damage</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Start/Lobby Screen -->
+      <div id="start-screen" class="screen-overlay">
+        <div class="menu-card glass-panel">
+          <h1>WORMS 2D<br><span class="subtitle">Tactical Annihilation</span></h1>
+          
+          <div class="menu-section">
+            <h3>Game Options</h3>
+            <div class="options-grid">
+              <div class="option-item">
+                <label for="worm-count-select">Worms per Team</label>
+                <select id="worm-count-select">
+                  <option value="2">2 Worms</option>
+                  <option value="3" selected>3 Worms</option>
+                  <option value="4">4 Worms</option>
+                </select>
+              </div>
+              <div class="option-item">
+                <label for="map-type-select">Terrain Type</label>
+                <select id="map-type-select">
+                  <option value="island" selected>Procedural Island</option>
+                  <option value="cave">Procedural Cave</option>
+                  <option value="canyon">Procedural Canyon</option>
+                </select>
+              </div>
+              <div class="option-item" style="grid-column: span 2;">
+                <label for="player-name-input">Your Team Name</label>
+                <input type="text" id="player-name-input" value="Wormy Command" style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-primary); border-radius: 8px; padding: 8px 12px; font-size: 0.9rem; font-family: var(--font-ui); outline: none;">
+              </div>
+              <div class="option-item" style="grid-column: span 2;">
+                <label for="game-mode-select">Game Mode</label>
+                <select id="game-mode-select" style="width: 100%;">
+                  <option value="local" selected>Local (Pass & Play)</option>
+                  <option value="online">Online Multiplayer</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="menu-section controls-hint">
+            <h3>Controls</h3>
+            <ul>
+              <li><strong>A / D (or Left / Right Arrow)</strong>: Move Worm</li>
+              <li><strong>W / S (or Up / Down Arrow)</strong>: Aim Weapon</li>
+              <li><strong>Shift + Arrow</strong>: Quick Jump / Backflip</li>
+              <li><strong>Spacebar (Hold & Release)</strong>: Fire Weapon (Charge power)</li>
+              <li><strong>Tab (or Click Weapon Panel)</strong>: Toggle Weapon Menu</li>
+              <li><strong>Left Mouse Click</strong>: Target for Air Strike / Homing Missile</li>
+            </ul>
+          </div>
+
+          <button id="start-game-btn" class="btn btn-primary">BATTLE!</button>
+        </div>
+      </div>
+
+      <!-- Weapon Selection Grid Overlay (Hidden by default) -->
+      <div id="weapon-select-overlay" class="screen-overlay hidden">
+        <div class="menu-card weapon-grid-card glass-panel">
+          <h2>Weapon Arsenal</h2>
+          <div class="weapon-grid" id="weapon-grid">
+            <!-- Dynamically populated via JS -->
+          </div>
+          <button id="close-weapons-btn" class="btn btn-secondary">Close</button>
+        </div>
+      </div>
+
+      <!-- Handover Screen Overlay (Hidden by default) -->
+      <div id="handover-screen" class="screen-overlay handover-overlay hidden">
+        <div class="menu-card glass-panel">
+          <h1 id="handover-title">Handover Controls</h1>
+          <p id="handover-subtitle" class="subtitle">Get ready, Red Team!</p>
+          <div style="margin: 24px 0;">
+            <div id="handover-avatar" class="handover-avatar">👥</div>
+            <span id="handover-worm-name" class="highlight-text" style="font-size: 1.25rem;">Wormy is up next</span>
+          </div>
+          <button id="handover-start-btn" class="btn btn-primary">Start Turn</button>
+        </div>
+      </div>
+
+      <!-- Game Over Screen -->
+      <div id="game-over-screen" class="screen-overlay hidden">
+        <div class="menu-card glass-panel text-center">
+          <h1 id="victory-title">Victory!</h1>
+          <p id="victory-subtitle" class="subtitle">Red Team has won the war</p>
+          
+          <div class="stats-panel">
+            <h3>Battle Stats</h3>
+            <div class="stats-grid">
+              <div class="stat-box">
+                <span class="stat-val" id="stat-turns">14</span>
+                <span class="stat-label">Turns Played</span>
+              </div>
+              <div class="stat-box">
+                <span class="stat-val" id="stat-damage">520</span>
+                <span class="stat-label">Total Damage Dealt</span>
+              </div>
+              <div class="stat-box">
+                <span class="stat-val" id="stat-drowns">2</span>
+                <span class="stat-label">Worms Drowned</span>
+              </div>
+            </div>
+          </div>
+
+          <button id="main-menu-btn" class="btn btn-primary">Main Menu</button>
+        </div>
+      </div>
+
+      <!-- Online Lobby Overlay (Hidden by default) -->
+      <div id="online-lobby-overlay" class="screen-overlay hidden">
+        <div class="menu-card glass-panel text-center" style="max-width: 500px; display: flex; flex-direction: column;">
+          <h1 id="lobby-title">Online Lobbies</h1>
+          <p id="lobby-status" class="subtitle" style="margin-top: 6px;">Connecting to server...</p>
+          
+          <div id="lobbies-list-container" style="min-height: 200px; max-height: 320px; overflow-y: auto; margin: 16px 0; padding: 12px; background: rgba(0, 0, 0, 0.25); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
+            <div id="lobbies-list" style="display: flex; flex-direction: column; gap: 8px;">
+              <p style="color: rgba(255,255,255,0.4); padding: 40px 0; font-size: 0.95rem;">No active rooms found. Create one to begin!</p>
+            </div>
+          </div>
+          
+          <div id="room-actions-container" style="display: flex; flex-direction: column; gap: 12px; align-items: center; justify-content: center; width: 100%;">
+            <!-- Default Lobbies Controls -->
+            <div id="room-lobby-controls" style="display: flex; flex-direction: column; gap: 12px; align-items: center; width: 100%;">
+              <div id="room-name-input-wrapper" style="display: flex; gap: 8px; align-items: center; margin-bottom: 4px;">
+                <label for="room-name-input" style="font-size: 0.9rem; color: rgba(255,255,255,0.7);">Room Name:</label>
+                <input type="text" id="room-name-input" value="Boggy's Fort" style="background: rgba(15,23,42,0.8); border: 1px solid rgba(255,255,255,0.15); color: #fff; border-radius: 6px; padding: 6px 12px; font-size: 0.9rem; font-family: var(--font-ui); outline: none; width: 180px;">
+              </div>
+              
+              <div style="display: flex; gap: 12px; justify-content: center; width: 100%;">
+                <button id="create-lobby-btn" class="btn btn-primary">Create Room</button>
+                <button id="cancel-matchmaking-btn" class="btn btn-secondary">Back</button>
+              </div>
+            </div>
+
+            <!-- Host Start Match controls (hidden by default) -->
+            <div id="room-host-controls" class="hidden" style="display: flex; flex-direction: column; gap: 12px; align-items: center; width: 100%;">
+              <button id="host-start-match-btn" class="btn btn-primary hidden" style="padding: 12px 24px; font-size: 1.1rem; width: 200px;">Start Match</button>
+              <button id="host-leave-btn" class="btn btn-secondary" style="width: 200px;">Cancel Room</button>
+            </div>
+
+            <!-- Guest Wait controls (hidden by default) -->
+            <div id="room-guest-controls" class="hidden" style="display: flex; flex-direction: column; gap: 12px; align-items: center; width: 100%;">
+              <button id="guest-leave-btn" class="btn btn-secondary" style="width: 200px;">Leave Room</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Opponent Disconnected Overlay (Hidden by default) -->
+      <div id="disconnect-overlay" class="screen-overlay hidden">
+        <div class="menu-card glass-panel text-center">
+          <h1>Match Ended</h1>
+          <p class="subtitle" style="margin: 20px 0; font-size: 1.1rem;">Opponent has disconnected or left the game.</p>
+          <button id="disconnect-back-btn" class="btn btn-primary">Return to Lobby</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
