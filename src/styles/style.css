@@ -1,0 +1,26 @@
+@import './variables.css';
+@import './lobby.css';
+@import './hud.css';
+@import './handover.css';
+
+/* Responsive Scaling Overrides */
+@media (max-height: 600px) {
+  .hud-top {
+    gap: 10px;
+  }
+  .hud-panel {
+    padding: 6px 12px;
+  }
+  #turn-timer {
+    font-size: 1.6rem;
+  }
+  .active-worm-panel {
+    min-width: 150px;
+  }
+  .menu-card {
+    padding: 20px;
+  }
+  h1 {
+    font-size: 1.8rem;
+  }
+}

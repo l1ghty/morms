@@ -290,3 +290,77 @@ export function calculateExplosionImpact(ex, ey, radius, maxDamage, knockbackFor
     }
   });
 }
+
+export function getSafeSpawnPoint(minX, maxX, terrain, waterLevel, mapType) {
+  let attempts = 0;
+  while (attempts < 150) {
+    const x = minX + Math.random() * (maxX - minX);
+    let y = 350;
+    let foundGround = false;
+    while (y < waterLevel - 30) {
+      if (terrain.isSolid(x, y)) {
+        foundGround = true;
+        break;
+      }
+      y += 2;
+    }
+    if (foundGround) {
+      while (y > 100 && terrain.isSolid(x, y)) {
+        y--;
+      }
+      if (mapType === 'cave' && y < 285) {
+        attempts++;
+        continue;
+      }
+      return { x, y: y - 10 };
+    }
+    attempts++;
+  }
+  return { x: minX + (maxX - minX) / 2, y: 550 };
+}
+
+export function getActiveTeamWorm(team, worms) {
+  const teamWorms = worms.filter(w => w.teamName === team.name);
+  let checkedCount = 0;
+  let indexToCheck = team.activeWormIndex;
+  
+  while (checkedCount < teamWorms.length) {
+    const candidate = teamWorms[indexToCheck];
+    if (candidate.health > 0) {
+      team.activeWormIndex = indexToCheck;
+      return candidate;
+    }
+    indexToCheck = (indexToCheck + 1) % teamWorms.length;
+    checkedCount++;
+  }
+  return null;
+}
+
+export function rotateActiveWorm(teams, activeTeamIndex, worms, onGameOver) {
+  const currentTeam = teams[activeTeamIndex];
+  const liveWormsInTeam = worms.filter(w => w.teamName === currentTeam.name && w.health > 0);
+  
+  if (liveWormsInTeam.length > 0) {
+    currentTeam.activeWormIndex = (currentTeam.activeWormIndex + 1) % worms.filter(w => w.teamName === currentTeam.name).length;
+  }
+  
+  const nextTeamIndex = (activeTeamIndex + 1) % teams.length;
+  const team = teams[nextTeamIndex];
+  const nextWorm = getActiveTeamWorm(team, worms);
+  
+  if (!nextWorm) {
+    const otherTeamIndex = (nextTeamIndex + 1) % teams.length;
+    const otherTeam = teams[otherTeamIndex];
+    onGameOver(otherTeam.name);
+    return null;
+  }
+  
+  return { nextWorm, nextTeamIndex };
+}
+
+export function getRandomWindStrength() {
+  const windStrengths = [-0.15, -0.1, -0.05, 0, 0.05, 0.1, 0.15];
+  return windStrengths[Math.floor(Math.random() * windStrengths.length)];
+}
+
+

@@ -1,7 +1,7 @@
 import { ServerTerrain } from './server_terrain.js';
 import { ServerWorm } from './server_worm.js';
 import { ServerProjectile } from './server_projectile.js';
-import { calculateExplosionImpact } from './physics.js';
+import { calculateExplosionImpact, getSafeSpawnPoint, getActiveTeamWorm, rotateActiveWorm, getRandomWindStrength } from './physics.js';
 
 export class ServerGame {
   constructor(room) {
@@ -52,42 +52,14 @@ export class ServerGame {
     const redNames = ['Boggy', 'Dunky', 'Squeaky', 'Gordo'];
     const blueNames = ['Slippy', 'Slimy', 'Curly', 'Ziggy'];
     
-    const getSafeSpawnPoint = (minX, maxX) => {
-      let attempts = 0;
-      while (attempts < 150) {
-        const x = minX + Math.random() * (maxX - minX);
-        let y = 350;
-        let foundGround = false;
-        while (y < this.waterLevel - 30) {
-          if (this.terrain.isSolid(x, y)) {
-            foundGround = true;
-            break;
-          }
-          y += 2;
-        }
-        if (foundGround) {
-          while (y > 100 && this.terrain.isSolid(x, y)) {
-            y--;
-          }
-          if (this.room.mapType === 'cave' && y < 285) {
-            attempts++;
-            continue;
-          }
-          return { x, y: y - 10 };
-        }
-        attempts++;
-      }
-      return { x: minX + (maxX - minX) / 2, y: 550 };
-    };
-
     let idCounter = 1;
     for (let i = 0; i < this.room.wormsPerTeam; i++) {
       const minX = 200 + i * segmentWidth;
       const maxX = 200 + (i + 1) * segmentWidth;
       const midX = minX + segmentWidth / 2;
       
-      const redPos = getSafeSpawnPoint(minX, midX - 15);
-      const bluePos = getSafeSpawnPoint(midX + 15, maxX);
+      const redPos = getSafeSpawnPoint(minX, midX - 15, this.terrain, this.waterLevel, this.room.mapType);
+      const bluePos = getSafeSpawnPoint(midX + 15, maxX, this.terrain, this.waterLevel, this.room.mapType);
       
       this.worms.push(new ServerWorm(idCounter++, redPos.x, redPos.y, redNames[i % redNames.length], this.teams[0].name, '#ef4444', this));
       this.worms.push(new ServerWorm(idCounter++, bluePos.x, bluePos.y, blueNames[i % blueNames.length], this.teams[1].name, '#3b82f6', this));
@@ -110,41 +82,24 @@ export class ServerGame {
 
   setupNextTurn(isFirstTurn = false) {
     if (!isFirstTurn) {
+      const rotation = rotateActiveWorm(this.teams, this.activeTeamIndex, this.worms, (name) => this.gameOver(name));
+      if (!rotation) return;
       this.turnsPlayed++;
-      const currentTeam = this.teams[this.activeTeamIndex];
-      const liveWormsInTeam = this.worms.filter(w => w.teamName === currentTeam.name && w.health > 0);
-      if (liveWormsInTeam.length > 0) {
-        currentTeam.activeWormIndex = (currentTeam.activeWormIndex + 1) % this.worms.filter(w => w.teamName === currentTeam.name).length;
+      this.activeWorm = rotation.nextWorm;
+      this.activeTeamIndex = rotation.nextTeamIndex;
+    } else {
+      const team = this.teams[this.activeTeamIndex];
+      const nextWorm = getActiveTeamWorm(team, this.worms);
+      if (!nextWorm) {
+        const otherTeamIndex = (this.activeTeamIndex + 1) % this.teams.length;
+        const otherTeam = this.teams[otherTeamIndex];
+        this.gameOver(otherTeam.name);
+        return;
       }
-      this.activeTeamIndex = (this.activeTeamIndex + 1) % this.teams.length;
+      this.activeWorm = nextWorm;
     }
     
     const team = this.teams[this.activeTeamIndex];
-    const teamWorms = this.worms.filter(w => w.teamName === team.name);
-    
-    let nextWorm = null;
-    let checkedCount = 0;
-    let indexToCheck = team.activeWormIndex;
-    
-    while (checkedCount < teamWorms.length) {
-      const candidate = teamWorms[indexToCheck];
-      if (candidate.health > 0) {
-        nextWorm = candidate;
-        team.activeWormIndex = indexToCheck;
-        break;
-      }
-      indexToCheck = (indexToCheck + 1) % teamWorms.length;
-      checkedCount++;
-    }
-    
-    if (!nextWorm) {
-      const otherTeamIndex = (this.activeTeamIndex + 1) % this.teams.length;
-      const otherTeam = this.teams[otherTeamIndex];
-      this.gameOver(otherTeam.name);
-      return;
-    }
-    
-    this.activeWorm = nextWorm;
     this.selectedWeaponIndex = team.selectedWeaponIndex; // Sync active weapon index for new team
     this.state = 'HANDOVER';
     this.turnTimer = 'Ready';
@@ -164,11 +119,9 @@ export class ServerGame {
     if (windStrength !== null) {
       this.wind.strength = windStrength;
     } else {
-      const windStrengths = [-0.15, -0.1, -0.05, 0, 0.05, 0.1, 0.15];
-      this.wind.strength = windStrengths[Math.floor(Math.random() * windStrengths.length)];
+      this.wind.strength = getRandomWindStrength();
     }
     this.wind.x = this.wind.strength;
-    
     this.startTimerLoop();
   }
 

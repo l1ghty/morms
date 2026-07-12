@@ -1,0 +1,84 @@
+:root {
+  --bg-dark: #0a0e17;
+  --panel-bg: rgba(13, 20, 35, 0.65);
+  --panel-border: rgba(255, 255, 255, 0.08);
+  --panel-glow: rgba(0, 0, 0, 0.3);
+  
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-accent: #f59e0b;
+  
+  --color-red-team: #ef4444;
+  --color-red-glow: rgba(239, 68, 68, 0.4);
+  --color-blue-team: #3b82f6;
+  --color-blue-glow: rgba(59, 130, 246, 0.4);
+  
+  --btn-primary: #10b981;
+  --btn-primary-hover: #059669;
+  --btn-secondary: #4b5563;
+  --btn-secondary-hover: #374151;
+  
+  --font-hud: 'Space Grotesk', sans-serif;
+  --font-retro: 'Press Start 2P', monospace;
+  --font-ui: 'Outfit', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+
+body, html {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-dark);
+  font-family: var(--font-ui);
+  color: var(--text-primary);
+}
+
+#app {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.game-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-width: 1920px;
+  max-height: 1080px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  background: radial-gradient(circle at top, #1e293b 0%, #0f172a 100%);
+}
+
+#game-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.glass-panel {
+  background: var(--panel-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--panel-border);
+  box-shadow: 0 8px 32px 0 var(--panel-glow);
+  border-radius: 16px;
+}
+
+.hidden {
+  display: none !important;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.text-center {
+  text-align: center;
+}

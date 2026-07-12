@@ -1,0 +1,43 @@
+.handover-overlay {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.handover-card {
+  max-width: 320px !important;
+  padding: 20px 24px !important;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+#handover-title {
+  font-size: 1.6rem !important;
+  margin-bottom: 6px !important;
+}
+
+.handover-card.red-team {
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  box-shadow: 0 10px 40px rgba(239, 68, 68, 0.25);
+}
+
+.handover-card.blue-team {
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  box-shadow: 0 10px 40px rgba(59, 130, 246, 0.25);
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.handover-avatar {
+  font-size: 2.2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 12px;
+  width: 50px;
+  height: 50px;
+  animation: pulse 2s infinite;
+}
