@@ -1191,7 +1191,7 @@ export class Game {
       this.ctx.moveTo(this.mouse.canvasX - 25, this.mouse.canvasY);
       this.ctx.lineTo(this.mouse.canvasX + 25, this.mouse.canvasY);
       this.ctx.moveTo(this.mouse.canvasX, this.mouse.canvasY - 25);
-      this.ctx.lineTo(this.mouse.canvasX, this.game.waterLevel || this.mouse.canvasY + 25); // safe fallback boundary limit
+      this.ctx.lineTo(this.mouse.canvasX, this.waterLevel || this.mouse.canvasY + 25); // safe fallback boundary limit
       this.ctx.stroke();
     }
   }

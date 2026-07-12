@@ -1,3 +1,5 @@
+import { resolveWormCollision, moveWorm } from './physics.js';
+
 export class ServerWorm {
   constructor(id, x, y, name, teamName, teamColor, game) {
     this.id = id;
@@ -74,60 +76,7 @@ export class ServerWorm {
   }
 
   move(dir, dt) {
-    if (this.health <= 0 || this.isFalling) return;
-    if (dir !== 0) {
-      this.facingDir = dir;
-      const newX = this.x + dir * this.walkSpeed * dt;
-      const terrain = this.game.terrain;
-      const feetY = this.y + this.halfH;
-      
-      let climbHeight = -1;
-      const maxSlopeClimb = Math.max(8, Math.ceil(this.walkSpeed * dt * 1.6));
-      
-      for (let h = 0; h <= maxSlopeClimb; h++) {
-        let isClear = true;
-        const offsets = dir === 1 ? [-2, 0, 2, 4, 5] : [-5, -4, -2, 0, 2];
-        for (const ox of offsets) {
-          if (terrain.isSolid(newX + ox, feetY - h) ||
-              terrain.isSolid(newX + ox, feetY - h - 8) ||
-              terrain.isSolid(newX + ox, feetY - h - 15)) {
-            isClear = false;
-            break;
-          }
-        }
-        if (isClear) {
-          climbHeight = h;
-          break;
-        }
-      }
-      
-      if (climbHeight !== -1) {
-        this.x = newX;
-        this.y -= climbHeight;
-        if (climbHeight === 0) {
-          const maxSlopeDescend = 8;
-          let foundGroundOffset = -1;
-          for (let dy = 1; dy <= maxSlopeDescend; dy++) {
-            let isGroundSolid = false;
-            for (let ox = -this.halfW + 2; ox <= this.halfW - 2; ox += 2) {
-              if (terrain.isSolid(this.x + ox, this.y + this.halfH + dy)) {
-                isGroundSolid = true;
-                break;
-              }
-            }
-            if (isGroundSolid) {
-              foundGroundOffset = dy;
-              break;
-            }
-          }
-          if (foundGroundOffset !== -1) {
-            this.y += (foundGroundOffset - 1);
-          }
-        }
-      } else {
-        this.vx = 0;
-      }
-    }
+    moveWorm(this, this.game.terrain, dir, dt);
   }
 
   update(dt) {
@@ -160,69 +109,14 @@ export class ServerWorm {
   }
 
   resolveTerrainCollision(dt) {
-    const terrain = this.game.terrain;
-    const feetY = this.y + this.halfH;
-    let isInside = false;
-    for (let ox = -this.halfW + 2; ox <= this.halfW - 2; ox += 2) {
-      if (terrain.isSolid(this.x + ox, feetY)) {
-        isInside = true;
-        break;
+    resolveWormCollision(
+      this,
+      this.game.terrain,
+      () => this.game.endActiveTurn(),
+      (dmg) => {
+        this.damage(dmg);
+        this.game.broadcastAudio('worm_damage');
       }
-    }
-    
-    if (isInside) {
-      if (this.vy >= 0) {
-        if (this.isFalling && this.vy > 6.5) {
-          const dmg = Math.round((this.vy - 6.5) * 16);
-          if (dmg > 0) {
-            this.damage(dmg);
-            this.game.broadcastAudio('worm_damage');
-            if (this === this.game.activeWorm &&
-                (this.game.state === 'PLAYING' ||
-                 this.game.state === 'FIRING' ||
-                 this.game.state === 'RETREAT')) {
-              this.game.endActiveTurn();
-            }
-          }
-        }
-        
-        this.vy = 0;
-        this.vx = 0;
-        this.isFalling = false;
-        
-        let pushUpCount = 0;
-        const maxPushUp = 20;
-        while (pushUpCount < maxPushUp) {
-          let stillInside = false;
-          for (let ox = -this.halfW + 2; ox <= this.halfW - 2; ox += 2) {
-            if (terrain.isSolid(this.x + ox, this.y + this.halfH)) {
-              stillInside = true;
-              break;
-            }
-          }
-          if (stillInside) {
-            this.y -= 1.0;
-            pushUpCount++;
-          } else {
-            break;
-          }
-        }
-      } else {
-        this.vy = 0.5;
-        this.vx *= 0.6;
-        this.y += 1.5;
-      }
-    } else {
-      let hasGround = false;
-      for (let ox = -this.halfW + 2; ox <= this.halfW - 2; ox += 2) {
-        if (terrain.isSolid(this.x + ox, feetY + 2.5)) {
-          hasGround = true;
-          break;
-        }
-      }
-      if (!hasGround) {
-        this.isFalling = true;
-      }
-    }
+    );
   }
 }

@@ -1,0 +1,292 @@
+export function resolveWormCollision(worm, terrain, endActiveTurnCallback, damageCallback) {
+  const feetY = worm.y + worm.halfH;
+  let isInside = false;
+  for (let ox = -worm.halfW + 2; ox <= worm.halfW - 2; ox += 2) {
+    if (terrain.isSolid(worm.x + ox, feetY)) {
+      isInside = true;
+      break;
+    }
+  }
+  
+  if (isInside) {
+    if (worm.vy >= 0) {
+      if (worm.isFalling && worm.vy > 6.5) {
+        const dmg = Math.round((worm.vy - 6.5) * 16);
+        if (dmg > 0) {
+          damageCallback(dmg);
+          if (worm.game && worm.game.activeWorm === worm && 
+              ['PLAYING', 'FIRING', 'RETREAT'].includes(worm.game.state)) {
+            endActiveTurnCallback();
+          }
+        }
+      }
+      worm.vy = 0;
+      worm.vx = 0;
+      worm.isFalling = false;
+      
+      let pushUpCount = 0;
+      const maxPushUp = 20;
+      while (pushUpCount < maxPushUp) {
+        let stillInside = false;
+        for (let ox = -worm.halfW + 2; ox <= worm.halfW - 2; ox += 2) {
+          if (terrain.isSolid(worm.x + ox, worm.y + worm.halfH)) {
+            stillInside = true;
+            break;
+          }
+        }
+        if (stillInside) {
+          worm.y -= 1.0;
+          pushUpCount++;
+        } else {
+          break;
+        }
+      }
+    } else {
+      worm.vy = 0.5;
+      worm.vx *= 0.6;
+      worm.y += 1.5;
+    }
+  } else {
+    let hasGround = false;
+    for (let ox = -worm.halfW + 2; ox <= worm.halfW - 2; ox += 2) {
+      if (terrain.isSolid(worm.x + ox, feetY + 2.5)) {
+        hasGround = true;
+        break;
+      }
+    }
+    if (!hasGround) {
+      worm.isFalling = true;
+    }
+  }
+}
+
+export function moveWorm(worm, terrain, dir, dt) {
+  if (worm.health <= 0 || worm.isFalling) return false;
+  
+  if (dir !== 0) {
+    worm.facingDir = dir;
+    const newX = worm.x + dir * worm.walkSpeed * dt;
+    const feetY = worm.y + worm.halfH;
+    
+    let climbHeight = -1;
+    const maxSlopeClimb = Math.max(8, Math.ceil(worm.walkSpeed * dt * 1.6));
+    
+    for (let h = 0; h <= maxSlopeClimb; h++) {
+      let isClear = true;
+      const offsets = dir === 1 ? [-2, 0, 2, 4, 5] : [-5, -4, -2, 0, 2];
+      for (const ox of offsets) {
+        if (terrain.isSolid(newX + ox, feetY - h) ||
+            terrain.isSolid(newX + ox, feetY - h - 8) ||
+            terrain.isSolid(newX + ox, feetY - h - 15)) {
+          isClear = false;
+          break;
+        }
+      }
+      if (isClear) {
+        climbHeight = h;
+        break;
+      }
+    }
+    
+    if (climbHeight !== -1) {
+      worm.x = newX;
+      worm.y -= climbHeight;
+      
+      if (climbHeight === 0) {
+        const maxSlopeDescend = 8;
+        let foundGroundOffset = -1;
+        for (let dy = 1; dy <= maxSlopeDescend; dy++) {
+          let isGroundSolid = false;
+          for (let ox = -worm.halfW + 2; ox <= worm.halfW - 2; ox += 2) {
+            if (terrain.isSolid(worm.x + ox, worm.y + worm.halfH + dy)) {
+              isGroundSolid = true;
+              break;
+            }
+          }
+          if (isGroundSolid) {
+            foundGroundOffset = dy;
+            break;
+          }
+        }
+        if (foundGroundOffset !== -1) {
+          worm.y += (foundGroundOffset - 1);
+        }
+      }
+      return true;
+    } else {
+      worm.vx = 0;
+      return false;
+    }
+  }
+  return false;
+}
+
+export function setupWeaponProperties(type, selectedFuseTime) {
+  const props = {
+    radius: 4,
+    elasticity: 0.5,
+    affectedByWind: false,
+    contactFuse: false,
+    blastRadius: 45,
+    maxDamage: 50,
+    knockbackForce: 7.5
+  };
+  
+  switch (type) {
+    case 'bazooka':
+      props.radius = 3;
+      props.affectedByWind = true;
+      props.contactFuse = true;
+      props.blastRadius = 45;
+      props.maxDamage = 50;
+      props.knockbackForce = 7.5;
+      break;
+    case 'grenade':
+      props.radius = 4;
+      props.affectedByWind = false;
+      props.contactFuse = false;
+      props.fuse = selectedFuseTime || 3.0;
+      props.elasticity = 0.55;
+      props.blastRadius = 48;
+      props.maxDamage = 55;
+      props.knockbackForce = 8.0;
+      break;
+    case 'cluster':
+      props.radius = 4;
+      props.affectedByWind = false;
+      props.contactFuse = false;
+      props.fuse = selectedFuseTime || 3.0;
+      props.elasticity = 0.5;
+      props.blastRadius = 40;
+      props.maxDamage = 45;
+      props.knockbackForce = 6.5;
+      break;
+    case 'cluster_shrapnel':
+      props.radius = 3;
+      props.affectedByWind = false;
+      props.contactFuse = true;
+      props.elasticity = 0.45;
+      props.blastRadius = 25;
+      props.maxDamage = 25;
+      props.knockbackForce = 4.5;
+      break;
+    case 'holy':
+      props.radius = 5;
+      props.affectedByWind = false;
+      props.contactFuse = false;
+      props.fuse = selectedFuseTime || 3.0;
+      props.elasticity = 0.65;
+      props.blastRadius = 85;
+      props.maxDamage = 95;
+      props.knockbackForce = 14.0;
+      props.playedHallelujah = false;
+      break;
+    case 'dynamite':
+      props.radius = 5;
+      props.affectedByWind = false;
+      props.contactFuse = false;
+      props.fuse = 5.0;
+      props.elasticity = 0.15;
+      props.blastRadius = 75;
+      props.maxDamage = 85;
+      props.knockbackForce = 12.0;
+      break;
+    case 'airstrike_missile':
+      props.radius = 4;
+      props.affectedByWind = false;
+      props.contactFuse = true;
+      props.blastRadius = 42;
+      props.maxDamage = 45;
+      props.knockbackForce = 7.0;
+      break;
+  }
+  return props;
+}
+
+export function getTerrainNormal(tx, ty, terrain) {
+  let nx = 0;
+  let ny = 0;
+  const r = 4;
+  for (let dy = -r; dy <= r; dy++) {
+    for (let dx = -r; dx <= r; dx++) {
+      if (dx * dx + dy * dy <= r * r) {
+        if (terrain.isSolid(tx + dx, ty + dy)) {
+          nx -= dx;
+          ny -= dy;
+        }
+      }
+    }
+  }
+  const len = Math.sqrt(nx * nx + ny * ny);
+  if (len === 0) return { x: 0, y: -1 };
+  return { x: nx / len, y: ny / len };
+}
+
+export function handleTerrainBounce(proj, terrain, onBounceAudioCallback) {
+  const normal = getTerrainNormal(proj.x, proj.y, terrain);
+  const dot = proj.vx * normal.x + proj.vy * normal.y;
+  
+  if (dot < 0) {
+    proj.vx = (proj.vx - 2 * dot * normal.x) * proj.elasticity;
+    proj.vy = (proj.vy - 2 * dot * normal.y) * proj.elasticity;
+    if (onBounceAudioCallback) {
+      onBounceAudioCallback();
+    }
+    
+    let limit = 0;
+    while (terrain.isSolid(proj.x, proj.y) && limit < 15) {
+      proj.x += normal.x * 0.8;
+      proj.y += normal.y * 0.8;
+      limit++;
+    }
+  }
+  
+  const speed = Math.sqrt(proj.vx * proj.vx + proj.vy * proj.vy);
+  if (speed < 0.25) {
+    proj.vx = 0;
+    proj.vy = 0;
+  }
+}
+
+export function calculateExplosionImpact(ex, ey, radius, maxDamage, knockbackForce, worms, projectiles, onWormDamage, onLaunchWorm, onLaunchProj) {
+  // Worm impacts
+  worms.forEach(worm => {
+    if (worm.health <= 0) return;
+    
+    const dx = worm.x - ex;
+    const dy = (worm.y - 2) - ey;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const effectRadius = radius + 15;
+    
+    if (dist < effectRadius) {
+      const proximity = (effectRadius - dist) / effectRadius;
+      const damage = Math.round(maxDamage * proximity);
+      if (damage > 0) {
+        onWormDamage(worm, damage);
+      }
+      
+      const angle = dist === 0 ? -Math.PI / 2 : Math.atan2(dy, dx);
+      const lift = -1.2 * proximity;
+      const horizontalPush = Math.cos(angle) * knockbackForce * proximity;
+      const verticalPush = Math.sin(angle) * knockbackForce * proximity + lift;
+      
+      onLaunchWorm(worm, horizontalPush, verticalPush);
+    }
+  });
+
+  // Projectile impacts
+  projectiles.forEach(proj => {
+    const dx = proj.x - ex;
+    const dy = proj.y - ey;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const effectRadius = radius + 20;
+    
+    if (dist > 0 && dist < effectRadius) {
+      const proximity = (effectRadius - dist) / effectRadius;
+      const angle = Math.atan2(dy, dx);
+      const push = knockbackForce * 0.7 * proximity;
+      
+      onLaunchProj(proj, Math.cos(angle) * push, Math.sin(angle) * push);
+    }
+  });
+}

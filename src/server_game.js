@@ -1,6 +1,7 @@
 import { ServerTerrain } from './server_terrain.js';
 import { ServerWorm } from './server_worm.js';
 import { ServerProjectile } from './server_projectile.js';
+import { calculateExplosionImpact } from './physics.js';
 
 export class ServerGame {
   constructor(room) {
@@ -220,44 +221,22 @@ export class ServerGame {
     
     this.broadcastAudio(radius > 70 ? 'holy_explosion' : 'explosion');
     
-    this.worms.forEach(w => {
-      if (w.health <= 0) return;
-      const dx = w.x - x;
-      const dy = (w.y - 2) - y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      const effectRadius = radius + 15;
-      
-      if (dist < effectRadius) {
-        const proximity = (effectRadius - dist) / effectRadius;
-        const damage = Math.round(maxDamage * proximity);
-        if (damage > 0) {
-          w.damage(damage);
-        }
-        
-        const angle = dist === 0 ? -Math.PI / 2 : Math.atan2(dy, dx);
-        const lift = -1.2 * proximity;
-        const horizontalPush = Math.cos(angle) * knockbackForce * proximity;
-        const verticalPush = Math.sin(angle) * knockbackForce * proximity + lift;
-        
-        w.vx += horizontalPush;
-        w.vy += verticalPush;
+    calculateExplosionImpact(
+      x, y, radius, maxDamage, knockbackForce,
+      this.worms, this.projectiles,
+      (w, damage) => {
+        w.damage(damage);
+      },
+      (w, vx, vy) => {
+        w.vx += vx;
+        w.vy += vy;
         w.isFalling = true;
+      },
+      (p, vx, vy) => {
+        p.vx += vx;
+        p.vy += vy;
       }
-    });
-
-    this.projectiles.forEach(p => {
-      const dx = p.x - x;
-      const dy = p.y - y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      const effectRadius = radius + 20;
-      if (dist > 0 && dist < effectRadius) {
-        const proximity = (effectRadius - dist) / effectRadius;
-        const angle = Math.atan2(dy, dx);
-        const push = knockbackForce * 0.7 * proximity;
-        p.vx += Math.cos(angle) * push;
-        p.vy += Math.sin(angle) * push;
-      }
-    });
+    );
   }
 
   fireActiveWeapon(vx, vy, spawnX, spawnY, clientWeaponId = null) {

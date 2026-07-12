@@ -1,3 +1,5 @@
+import { resolveWormCollision, moveWorm } from './physics.js';
+
 export class Worm {
   constructor(x, y, name, teamName, teamColor, game) {
     this.x = x;
@@ -61,158 +63,23 @@ export class Worm {
   }
 
   resolveTerrainCollision(dt) {
-    const terrain = this.game.terrain;
-    
-    // Probing point at the feet of the worm
-    const feetY = this.y + this.halfH;
-    const feetX = this.x;
-    
-    // Check if the worm is inside solid terrain
-    let isInside = false;
-    for (let ox = -this.halfW + 2; ox <= this.halfW - 2; ox += 2) {
-      if (terrain.isSolid(this.x + ox, feetY)) {
-        isInside = true;
-        break;
+    resolveWormCollision(
+      this,
+      this.game.terrain,
+      () => this.game.endActiveTurn(),
+      (dmg) => {
+        this.damage(dmg);
+        this.game.audio.play('worm_damage');
+        this.game.particles.spawnText(this.x, this.y - 20, `-${dmg}`, '#ef4444');
       }
-    }
-    
-    if (isInside) {
-      if (this.vy >= 0) {
-        // Calculate fall damage on hard impact
-        if (this.isFalling && this.vy > 6.5) {
-          const dmg = Math.round((this.vy - 6.5) * 16);
-          if (dmg > 0) {
-            this.damage(dmg);
-            this.game.audio.play('worm_damage');
-            this.game.particles.spawnText(this.x, this.y - 20, `-${dmg}`, '#ef4444');
-            
-            // Switch team if active worm takes fall damage during active state
-            if (this === this.game.activeWorm && 
-                (this.game.state === 'PLAYING' || 
-                 this.game.state === 'FIRING' || 
-                 this.game.state === 'RETREAT')) {
-              this.game.endActiveTurn();
-            }
-          }
-        }
-        
-        this.vy = 0;
-        this.vx = 0;
-        this.isFalling = false;
-        
-        // Push the worm upwards until it rests exactly on top of the terrain
-        let pushUpCount = 0;
-        const maxPushUp = 20;
-        
-        while (pushUpCount < maxPushUp) {
-          let stillInside = false;
-          for (let ox = -this.halfW + 2; ox <= this.halfW - 2; ox += 2) {
-            if (terrain.isSolid(this.x + ox, this.y + this.halfH)) {
-              stillInside = true;
-              break;
-            }
-          }
-          
-          if (stillInside) {
-            this.y -= 1.0;
-            pushUpCount++;
-          } else {
-            break;
-          }
-        }
-      } else {
-        // Moving upwards: bumped head against ceiling!
-        this.vy = 0.5; // push down/bounce slightly
-        this.vx *= 0.6; // slow down horizontal slide
-        this.y += 1.5; // nudge out of ceiling
-      }
-    } else {
-      // Not inside terrain, check if there is ground directly underneath (e.g. 1px down)
-      let hasGround = false;
-      for (let ox = -this.halfW + 2; ox <= this.halfW - 2; ox += 2) {
-        if (terrain.isSolid(this.x + ox, feetY + 2.5)) {
-          hasGround = true;
-          break;
-        }
-      }
-      
-      if (!hasGround) {
-        this.isFalling = true;
-      }
-    }
+    );
   }
 
   move(dir, dt) {
-    if (this.health <= 0 || this.isFalling) return;
-    
-    if (dir !== 0) {
-      this.facingDir = dir;
-      
-      const newX = this.x + dir * this.walkSpeed * dt;
-      const terrain = this.game.terrain;
-      const feetY = this.y + this.halfH;
-      
-      // Slope climbing algorithm
-      // Check solid state at different heights in front of the worm
-      let climbHeight = -1;
-      const maxSlopeClimb = Math.max(8, Math.ceil(this.walkSpeed * dt * 1.6)); // dynamically scale with step size
-      
-      for (let h = 0; h <= maxSlopeClimb; h++) {
-        // Probe if the worm would fit at this step height (perfectly symmetric leading-edge check at feet, waist, and head)
-        let isClear = true;
-        const offsets = dir === 1 ? [-2, 0, 2, 4, 5] : [-5, -4, -2, 0, 2];
-        for (const ox of offsets) {
-          if (terrain.isSolid(newX + ox, feetY - h) ||
-              terrain.isSolid(newX + ox, feetY - h - 8) ||
-              terrain.isSolid(newX + ox, feetY - h - 15)) {
-            isClear = false;
-            break;
-          }
-        }
-        
-        if (isClear) {
-          climbHeight = h;
-          break;
-        }
-      }
-      
-      if (climbHeight !== -1) {
-        // Move worm forward and up the slope
-        this.x = newX;
-        this.y -= climbHeight;
-        
-        // Slope descending: snap to ground if the ground goes down
-        if (climbHeight === 0) {
-          const maxSlopeDescend = 8;
-          let foundGroundOffset = -1;
-          
-          for (let dy = 1; dy <= maxSlopeDescend; dy++) {
-            // Check if there is ground below the worm's new feet position
-            let isGroundSolid = false;
-            for (let ox = -this.halfW + 2; ox <= this.halfW - 2; ox += 2) {
-              if (terrain.isSolid(this.x + ox, this.y + this.halfH + dy)) {
-                isGroundSolid = true;
-                break;
-              }
-            }
-            if (isGroundSolid) {
-              foundGroundOffset = dy;
-              break;
-            }
-          }
-          
-          if (foundGroundOffset !== -1) {
-            this.y += (foundGroundOffset - 1);
-          }
-        }
-        
-        // Spawn small dirt puff walk particle occasionally
-        if (Math.random() < 0.15 * dt) {
-          this.game.particles.spawnBurst(this.x, this.y + this.halfH, 'dirt', 1);
-        }
-      } else {
-        // Blocked by vertical wall, can't move forward
-        this.vx = 0;
+    const walked = moveWorm(this, this.game.terrain, dir, dt);
+    if (walked) {
+      if (Math.random() < 0.15 * dt) {
+        this.game.particles.spawnBurst(this.x, this.y + this.halfH, 'dirt', 1);
       }
     }
   }

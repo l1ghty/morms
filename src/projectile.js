@@ -1,4 +1,5 @@
 import { createExplosion } from './explosion.js';
+import { setupWeaponProperties, handleTerrainBounce } from './physics.js';
 
 export class Projectile {
   constructor(x, y, vx, vy, type, game) {
@@ -10,82 +11,10 @@ export class Projectile {
     this.game = game;
     
     this.isDead = false;
-    this.radius = 4;
-    this.elasticity = 0.5; // default bounce energy loss
     
-    // Setup specific weapon configurations
-    this.setupWeaponProperties();
-  }
-
-  setupWeaponProperties() {
-    switch (this.type) {
-      case 'bazooka':
-        this.radius = 3;
-        this.affectedByWind = true;
-        this.contactFuse = true;
-        this.blastRadius = 45;
-        this.maxDamage = 50;
-        this.knockbackForce = 7.5;
-        break;
-      case 'grenade':
-        this.radius = 4;
-        this.affectedByWind = false;
-        this.contactFuse = false;
-        this.fuse = this.game.selectedFuseTime || 3.0; // changeable fuse
-        this.elasticity = 0.55;
-        this.blastRadius = 48;
-        this.maxDamage = 55;
-        this.knockbackForce = 8.0;
-        break;
-      case 'cluster':
-        this.radius = 4;
-        this.affectedByWind = false;
-        this.contactFuse = false;
-        this.fuse = this.game.selectedFuseTime || 3.0; // changeable fuse
-        this.elasticity = 0.5;
-        this.blastRadius = 40;
-        this.maxDamage = 45;
-        this.knockbackForce = 6.5;
-        break;
-      case 'cluster_shrapnel':
-        this.radius = 3;
-        this.affectedByWind = false;
-        this.contactFuse = true;
-        this.elasticity = 0.45;
-        this.blastRadius = 25;
-        this.maxDamage = 25;
-        this.knockbackForce = 4.5;
-        break;
-      case 'holy':
-        this.radius = 5;
-        this.affectedByWind = false;
-        this.contactFuse = false;
-        this.fuse = this.game.selectedFuseTime || 3.0; // changeable fuse
-        this.elasticity = 0.65; // Extra bouncy!
-        this.blastRadius = 85;
-        this.maxDamage = 95;
-        this.knockbackForce = 14.0;
-        this.playedHallelujah = false;
-        break;
-      case 'dynamite':
-        this.radius = 5;
-        this.affectedByWind = false;
-        this.contactFuse = false;
-        this.fuse = 5.0;
-        this.elasticity = 0.15; // Barely bounces, slides
-        this.blastRadius = 75;
-        this.maxDamage = 85;
-        this.knockbackForce = 12.0;
-        break;
-      case 'airstrike_missile':
-        this.radius = 4;
-        this.affectedByWind = false;
-        this.contactFuse = true;
-        this.blastRadius = 42;
-        this.maxDamage = 45;
-        this.knockbackForce = 7.0;
-        break;
-    }
+    // Assign properties from shared library
+    const props = setupWeaponProperties(this.type, this.game.selectedFuseTime);
+    Object.assign(this, props);
   }
 
   update(dt) {
@@ -147,8 +76,8 @@ export class Projectile {
       if (this.contactFuse) {
         this.explode();
       } else {
-        // Bounce physics
-        this.handleTerrainBounce();
+        // Bounce physics using shared function
+        handleTerrainBounce(this, terrain, () => this.game.audio.play('bounce'));
       }
       return;
     }
@@ -199,32 +128,6 @@ export class Projectile {
     }
   }
 
-  // Estimates the normal of the pixel terrain contour at (tx, ty)
-  getTerrainNormal(tx, ty) {
-    let nx = 0;
-    let ny = 0;
-    const r = 4;
-    const terrain = this.game.terrain;
-    
-    // Probe in a circle around contact point
-    for (let dy = -r; dy <= r; dy++) {
-      for (let dx = -r; dx <= r; dx++) {
-        if (dx * dx + dy * dy <= r * r) {
-          if (terrain.isSolid(tx + dx, ty + dy)) {
-            // Subtract probe offsets: solid pixels push normal away
-            nx -= dx;
-            ny -= dy;
-          }
-        }
-      }
-    }
-    
-    const len = Math.sqrt(nx * nx + ny * ny);
-    if (len === 0) {
-      return { x: 0, y: -1 }; // Fallback normal points straight up
-    }
-    return { x: nx / len, y: ny / len };
-  }
 
   explode() {
     this.isDead = true;
