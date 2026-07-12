@@ -1,4 +1,4 @@
-import { Game } from './game.js';
+import { Game } from './client/game.js';
 
 let game = null;
 

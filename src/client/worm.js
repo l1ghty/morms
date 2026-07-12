@@ -1,4 +1,4 @@
-import { resolveWormCollision, moveWorm } from './physics.js';
+import { resolveWormCollision, moveWorm } from '../common/physics.js';
 
 export class Worm {
   constructor(x, y, name, teamName, teamColor, game) {

@@ -4,10 +4,10 @@ import { Projectile } from './projectile.js';
 import { ParticleSystem } from './particles.js';
 import { AudioSynth } from './audio.js';
 import { MultiplayerManager } from './multiplayer.js';
-import { GameState, WEAPONS } from './constants.js';
+import { GameState, WEAPONS } from '../common/constants.js';
 import { UIManager } from './ui_manager.js';
 import { InputManager } from './input_manager.js';
-import { getSafeSpawnPoint, getActiveTeamWorm, rotateActiveWorm, getRandomWindStrength } from './physics.js';
+import { getSafeSpawnPoint, getActiveTeamWorm, rotateActiveWorm, getRandomWindStrength } from '../common/physics.js';
 
 export class Game {
   constructor(canvas) {
