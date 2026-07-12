@@ -1,0 +1,142 @@
+import { setupWeaponProperties, handleTerrainBounce } from './physics.js';
+
+/**
+ * BaseProjectile — shared physics loop, fuse countdown, terrain/worm
+ * contact detection, and cluster shrapnel logic for both client Projectile
+ * and headless ServerProjectile.
+ *
+ * Subclasses must implement:
+ *   playAudio(name)          — play/broadcast a sound effect
+ *   doExplode()              — trigger terrain carve + damage calculation
+ *   createShrapnel(x,y,vx,vy) — instantiate a new projectile of same class
+ *
+ * Subclasses may override (optional hooks):
+ *   onWaterHit()             — water splash particles
+ *   onFlightParticle()       — smoke trail particles during flight
+ *   onHallelujah()           — holy grenade audio cue (already handled in base)
+ */
+export class BaseProjectile {
+  constructor(x, y, vx, vy, type, game) {
+    this.x    = x;
+    this.y    = y;
+    this.vx   = vx;
+    this.vy   = vy;
+    this.type = type;
+    this.game = game;
+
+    this.isDead = false;
+
+    const props = setupWeaponProperties(this.type, this.game.selectedFuseTime);
+    Object.assign(this, props);
+  }
+
+  // ─── Physics Update ─────────────────────────────────────────────────────────
+
+  update(dt) {
+    if (this.isDead) return;
+
+    // Drowned / out of bounds
+    if (this.y >= this.game.waterLevel) {
+      this.playAudio('splash');
+      this.onWaterHit();
+      this.isDead = true;
+      return;
+    }
+
+    // Gravity
+    this.vy += this.game.gravity * dt;
+
+    // Wind
+    if (this.affectedByWind && this.game.wind) {
+      this.vx += this.game.wind.x * 0.04 * dt;
+    }
+
+    // Drag
+    this.vx *= Math.pow(0.992, dt);
+    this.vy *= Math.pow(0.992, dt);
+
+    // Integrate position
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
+
+    // Optional flight particles (smoke trail for rockets)
+    this.onFlightParticle(dt);
+
+    // Fuse countdown (timed weapons)
+    if (!this.contactFuse) {
+      this.fuse -= dt / 60;
+
+      if (this.type === 'holy' && this.fuse <= 1.1 && !this.playedHallelujah) {
+        this.playedHallelujah = true;
+        this.playAudio('hallelujah');
+      }
+
+      if (this.fuse <= 0) {
+        this.explode();
+        return;
+      }
+    }
+
+    // Terrain collision
+    if (this.game.terrain.isSolid(this.x, this.y)) {
+      if (this.contactFuse) {
+        this.explode();
+      } else {
+        handleTerrainBounce(this, this.game.terrain, () => this.playAudio('bounce'));
+      }
+      return;
+    }
+
+    // Direct worm contact (rockets / missiles)
+    if (this.contactFuse) {
+      for (const worm of this.game.worms) {
+        if (worm.health > 0) {
+          const dx = worm.x - this.x;
+          const dy = worm.y - this.y;
+          if (dx * dx + dy * dy < 144) { // 12² = 144
+            this.explode();
+            return;
+          }
+        }
+      }
+    }
+  }
+
+  // ─── Explosion + Cluster Shrapnel ────────────────────────────────────────────
+
+  explode() {
+    this.isDead = true;
+    this.doExplode();
+
+    if (this.type === 'cluster') {
+      for (let i = 0; i < 5; i++) {
+        const angle = -Math.PI / 2 + (i - 2) * 0.12 + (Math.random() - 0.5) * 0.08;
+        const speed = (3.5 + Math.random() * 2.5) * 1.4;
+        const shrap = this.createShrapnel(
+          this.x,
+          this.y - 6,
+          Math.cos(angle) * speed,
+          Math.sin(angle) * speed
+        );
+        this.game.projectiles.push(shrap);
+      }
+    }
+  }
+
+  // ─── Abstract / Hook Methods (override in subclass) ──────────────────────────
+
+  /** Must be overridden — plays/broadcasts a sound by name. */
+  playAudio(name) {}
+
+  /** Must be overridden — trigger damage + terrain carving at explosion site. */
+  doExplode() {}
+
+  /** Must be overridden — return a new shrapnel projectile of the same class. */
+  createShrapnel(x, y, vx, vy) { return null; }
+
+  /** Optional — water splash particles. */
+  onWaterHit() {}
+
+  /** Optional — smoke trail particles during flight. */
+  onFlightParticle(dt) {}
+}
