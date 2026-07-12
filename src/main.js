@@ -9,44 +9,48 @@ document.addEventListener('DOMContentLoaded', () => {
   game = new Game(canvas);
   window.game = game;
 
-  // Hook up Start Game Button
-  const startGameBtn = document.getElementById('start-game-btn');
-  startGameBtn.addEventListener('click', () => {
-    const wormCountSelect = document.getElementById('worm-count-select');
-    const mapTypeSelect = document.getElementById('map-type-select');
-    const gameModeSelect = document.getElementById('game-mode-select');
-    
-    const mode = gameModeSelect ? gameModeSelect.value : 'local';
-    
-    const settings = {
-      wormsPerTeam: parseInt(wormCountSelect.value, 10),
-      mapType: mapTypeSelect.value,
-      mode: mode
-    };
-    
-    if (mode === 'online') {
-      document.getElementById('start-screen').classList.add('hidden');
-      document.getElementById('online-lobby-overlay').classList.remove('hidden');
-      document.getElementById('lobby-status').textContent = 'Connecting to server...';
-      game.startOnline(settings);
-    } else {
-      document.getElementById('start-screen').classList.add('hidden');
-      document.getElementById('game-hud').classList.remove('hidden');
-      game.start(settings);
-    }
+  // Setup Game Mode button selection to launch game immediately
+  const modeButtons = document.querySelectorAll('.mode-btn');
+  modeButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const mode = btn.getAttribute('data-mode');
+      const wormCountSelect = document.getElementById('worm-count-select');
+      const mapTypeSelect = document.getElementById('map-type-select');
+      
+      const settings = {
+        wormsPerTeam: parseInt(wormCountSelect.value, 10),
+        mapType: mapTypeSelect.value,
+        mode: mode
+      };
+      
+      if (mode === 'online') {
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('online-lobby-overlay').classList.remove('hidden');
+        document.getElementById('lobby-status').textContent = 'Connecting to server...';
+        game.startOnline(settings);
+      } else {
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('game-hud').classList.remove('hidden');
+        game.start(settings);
+      }
+    });
   });
 
   // Hook up Main Menu Button
   const mainMenuBtn = document.getElementById('main-menu-btn');
   if (mainMenuBtn) {
     mainMenuBtn.addEventListener('click', () => {
-      document.getElementById('game-over-screen').classList.add('hidden');
-      document.getElementById('game-hud').classList.add('hidden');
-      document.getElementById('start-screen').classList.remove('hidden');
-      
+      const wasOnline = game && game.isOnline;
       if (game) {
-        game.disconnectOnline();
-        game.state = 'LOBBY'; // transition back to lobby state
+        if (wasOnline) {
+          game.mp.send({ type: 'return_to_lobby' });
+        } else {
+          document.getElementById('game-over-screen').classList.add('hidden');
+          document.getElementById('game-hud').classList.add('hidden');
+          game.disconnectOnline();
+          game.state = 'LOBBY';
+          document.getElementById('start-screen').classList.remove('hidden');
+        }
       }
     });
   }
@@ -70,13 +74,38 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Hook up Lobby settings changes (Host only)
+  const lobbyWormCount = document.getElementById('lobby-worm-count-select');
+  const lobbyMapType = document.getElementById('lobby-map-type-select');
+  
+  const sendLobbySettingsUpdate = () => {
+    if (game && game.isOnline) {
+      game.mp.send({
+        type: 'update_settings',
+        wormsPerTeam: parseInt(lobbyWormCount.value, 10),
+        mapType: lobbyMapType.value
+      });
+    }
+  };
+  
+  if (lobbyWormCount) lobbyWormCount.addEventListener('change', sendLobbySettingsUpdate);
+  if (lobbyMapType) lobbyMapType.addEventListener('change', sendLobbySettingsUpdate);
+
   // Hook up Disconnect Return Button
   const disconnectBackBtn = document.getElementById('disconnect-back-btn');
   if (disconnectBackBtn) {
     disconnectBackBtn.addEventListener('click', () => {
       document.getElementById('disconnect-overlay').classList.add('hidden');
-      document.getElementById('start-screen').classList.remove('hidden');
-      game.state = 'LOBBY';
+      
+      const wasOnline = game && game.settings && game.settings.mode === 'online';
+      if (wasOnline) {
+        document.getElementById('online-lobby-overlay').classList.remove('hidden');
+        document.getElementById('lobby-status').textContent = 'Connecting to server...';
+        game.startOnline(game.settings);
+      } else {
+        document.getElementById('start-screen').classList.remove('hidden');
+        game.state = 'LOBBY';
+      }
     });
   }
 

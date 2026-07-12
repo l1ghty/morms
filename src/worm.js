@@ -130,7 +130,7 @@ export class Worm {
       // Not inside terrain, check if there is ground directly underneath (e.g. 1px down)
       let hasGround = false;
       for (let ox = -this.halfW + 2; ox <= this.halfW - 2; ox += 2) {
-        if (terrain.isSolid(this.x + ox, feetY + 1.5)) {
+        if (terrain.isSolid(this.x + ox, feetY + 2.5)) {
           hasGround = true;
           break;
         }

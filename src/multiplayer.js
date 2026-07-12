@@ -177,6 +177,25 @@ export class MultiplayerManager {
               <span style="color: rgba(255,255,255,0.5); font-size: 0.95rem;">Waiting for host to start match...</span>
             </div>`;
         }
+        
+        // Update guest settings display
+        const guestWorms = document.getElementById('guest-worms-display');
+        const guestTerrain = document.getElementById('guest-terrain-display');
+        if (guestWorms && data.wormsPerTeam !== undefined) guestWorms.textContent = data.wormsPerTeam;
+        if (guestTerrain && data.mapType !== undefined) {
+          const mapNames = { island: 'Island', cave: 'Cave', canyon: 'Canyon' };
+          guestTerrain.textContent = mapNames[data.mapType] || data.mapType;
+        }
+        break;
+      case 'settings_updated':
+        console.log('Lobby settings updated:', data);
+        const guestWormsDisplay = document.getElementById('guest-worms-display');
+        const guestTerrainDisplay = document.getElementById('guest-terrain-display');
+        if (guestWormsDisplay) guestWormsDisplay.textContent = data.wormsPerTeam;
+        if (guestTerrainDisplay) {
+          const mapNames = { island: 'Island', cave: 'Cave', canyon: 'Canyon' };
+          guestTerrainDisplay.textContent = mapNames[data.mapType] || data.mapType;
+        }
         break;
       case 'start_match':
         this.isOnline = true;
@@ -191,6 +210,20 @@ export class MultiplayerManager {
       case 'player_left':
         this.game.handlePlayerLeft();
         break;
+      case 'back_to_lobby':
+        console.log('Returning to room lobby');
+        this.game.state = 'LOBBY';
+        
+        // Hide game over screen
+        const gameOverScreen = document.getElementById('game-over-screen');
+        if (gameOverScreen) gameOverScreen.classList.add('hidden');
+        
+        // Hide game HUD
+        const gameHudScreen = document.getElementById('game-hud');
+        if (gameHudScreen) gameHudScreen.classList.add('hidden');
+        
+        this.showRoomLobby();
+        break;
       default:
         // Execute handlers registered by the game
         if (this.handlers[data.type]) {
@@ -202,5 +235,64 @@ export class MultiplayerManager {
 
   registerHandler(type, callback) {
     this.handlers[type] = callback;
+  }
+
+  showRoomLobby() {
+    const lobbyOverlay = document.getElementById('online-lobby-overlay');
+    if (lobbyOverlay) lobbyOverlay.classList.remove('hidden');
+
+    const statusText = document.getElementById('lobby-status');
+    if (statusText) statusText.textContent = `Room: ${this.roomName || 'Online Room'}`;
+
+    const listContainer = document.getElementById('lobbies-list-container');
+    if (listContainer) {
+      listContainer.innerHTML = `
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 200px; gap: 16px;">
+          <div style="display: flex; justify-content: space-around; align-items: center; width: 100%; background: rgba(0,0,0,0.25); padding: 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
+            <div style="text-align: center; flex: 1;">
+              <div style="font-size: 0.8rem; color: rgba(255,255,255,0.5); text-transform: uppercase;">Host (Red)</div>
+              <div style="font-size: 1.1rem; font-weight: 600; color: #ef4444; margin-top: 4px; word-break: break-all;">${this.p1Name || 'Red Team'}</div>
+            </div>
+            <div style="font-size: 1.4rem; color: rgba(255,255,255,0.2); padding: 0 10px;">VS</div>
+            <div style="text-align: center; flex: 1;">
+              <div style="font-size: 0.8rem; color: rgba(255,255,255,0.5); text-transform: uppercase;">Opponent (Blue)</div>
+              <div style="font-size: 1.1rem; font-weight: 600; color: #3b82f6; margin-top: 4px; word-break: break-all;">${this.p2Name || 'Blue Team'}</div>
+            </div>
+          </div>
+          <span style="color: #4ade80; font-size: 0.95rem; font-weight: 600;">Opponent Connected! Ready to start.</span>
+        </div>`;
+    }
+
+    const lobbyControls = document.getElementById('room-lobby-controls');
+    if (lobbyControls) lobbyControls.classList.add('hidden');
+
+    if (this.playerNumber === 1) {
+      const hostControls = document.getElementById('room-host-controls');
+      if (hostControls) hostControls.classList.remove('hidden');
+      const guestControls = document.getElementById('room-guest-controls');
+      if (guestControls) guestControls.classList.add('hidden');
+      const startMatchBtn = document.getElementById('host-start-match-btn');
+      if (startMatchBtn) startMatchBtn.classList.remove('hidden');
+      
+      const wormSelect = document.getElementById('lobby-worm-count-select');
+      const mapSelect = document.getElementById('lobby-map-type-select');
+      const settings = this.game.settings || { wormsPerTeam: 3, mapType: 'island' };
+      if (wormSelect) wormSelect.value = settings.wormsPerTeam;
+      if (mapSelect) mapSelect.value = settings.mapType;
+    } else {
+      const hostControls = document.getElementById('room-host-controls');
+      if (hostControls) hostControls.classList.add('hidden');
+      const guestControls = document.getElementById('room-guest-controls');
+      if (guestControls) guestControls.classList.remove('hidden');
+      
+      const guestWorms = document.getElementById('guest-worms-display');
+      const guestTerrain = document.getElementById('guest-terrain-display');
+      const settings = this.game.settings || { wormsPerTeam: 3, mapType: 'island' };
+      if (guestWorms) guestWorms.textContent = settings.wormsPerTeam;
+      if (guestTerrain) {
+        const mapNames = { island: 'Island', cave: 'Cave', canyon: 'Canyon' };
+        guestTerrain.textContent = mapNames[settings.mapType] || settings.mapType;
+      }
+    }
   }
 }

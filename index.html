@@ -33,6 +33,12 @@
             </div>
           </div>
 
+          <!-- Teams HP Panel -->
+          <div class="hud-panel teams-hp-panel">
+            <span class="hud-label">Teams HP</span>
+            <div id="teams-hp-container" class="teams-hp-container"></div>
+          </div>
+
           <!-- Turn Timer -->
           <div class="hud-panel timer-panel">
             <span class="hud-label">TIME LEFT</span>
@@ -115,11 +121,11 @@
                 <input type="text" id="player-name-input" value="Wormy Command" style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-primary); border-radius: 8px; padding: 8px 12px; font-size: 0.9rem; font-family: var(--font-ui); outline: none;">
               </div>
               <div class="option-item" style="grid-column: span 2;">
-                <label for="game-mode-select">Game Mode</label>
-                <select id="game-mode-select" style="width: 100%;">
-                  <option value="local" selected>Local (Pass & Play)</option>
-                  <option value="online">Online Multiplayer</option>
-                </select>
+                <label>Start Game Mode</label>
+                <div class="mode-buttons-group">
+                  <button type="button" class="mode-btn btn-primary-style" data-mode="local">Local (Pass & Play)</button>
+                  <button type="button" class="mode-btn btn-primary-style" data-mode="online">Online Multiplayer</button>
+                </div>
               </div>
             </div>
           </div>
@@ -136,7 +142,6 @@
             </ul>
           </div>
 
-          <button id="start-game-btn" class="btn btn-primary">BATTLE!</button>
         </div>
       </div>
 
@@ -220,12 +225,34 @@
 
             <!-- Host Start Match controls (hidden by default) -->
             <div id="room-host-controls" class="hidden" style="display: flex; flex-direction: column; gap: 12px; align-items: center; width: 100%;">
+              <div class="lobby-settings-panel" style="display: flex; gap: 10px; margin-bottom: 8px;">
+                <div class="option-item" style="max-width: 130px;">
+                  <label for="lobby-worm-count-select" style="font-size: 0.75rem; color: rgba(255,255,255,0.7); margin-bottom: 2px;">Worms / Team</label>
+                  <select id="lobby-worm-count-select" style="padding: 4px 8px; font-size: 0.8rem; background: rgba(15,23,42,0.9); border-radius: 6px; border: 1px solid rgba(255,255,255,0.15); color: #fff; outline: none; cursor: pointer;">
+                    <option value="2">2 Worms</option>
+                    <option value="3" selected>3 Worms</option>
+                    <option value="4">4 Worms</option>
+                  </select>
+                </div>
+                <div class="option-item" style="max-width: 150px;">
+                  <label for="lobby-map-type-select" style="font-size: 0.75rem; color: rgba(255,255,255,0.7); margin-bottom: 2px;">Terrain Type</label>
+                  <select id="lobby-map-type-select" style="padding: 4px 8px; font-size: 0.8rem; background: rgba(15,23,42,0.9); border-radius: 6px; border: 1px solid rgba(255,255,255,0.15); color: #fff; outline: none; cursor: pointer;">
+                    <option value="island" selected>Procedural Island</option>
+                    <option value="cave">Procedural Cave</option>
+                    <option value="canyon">Procedural Canyon</option>
+                  </select>
+                </div>
+              </div>
               <button id="host-start-match-btn" class="btn btn-primary hidden" style="padding: 12px 24px; font-size: 1.1rem; width: 200px;">Start Match</button>
               <button id="host-leave-btn" class="btn btn-secondary" style="width: 200px;">Cancel Room</button>
             </div>
 
             <!-- Guest Wait controls (hidden by default) -->
             <div id="room-guest-controls" class="hidden" style="display: flex; flex-direction: column; gap: 12px; align-items: center; width: 100%;">
+              <div class="lobby-settings-display" style="font-size: 0.85rem; color: rgba(255,255,255,0.8); background: rgba(0,0,0,0.15); border-radius: 6px; padding: 6px 16px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 8px; font-family: var(--font-ui);">
+                Worms: <span id="guest-worms-display" style="font-weight: bold; color: var(--text-accent);">3</span> | 
+                Terrain: <span id="guest-terrain-display" style="font-weight: bold; color: var(--text-accent);">Island</span>
+              </div>
               <button id="guest-leave-btn" class="btn btn-secondary" style="width: 200px;">Leave Room</button>
             </div>
           </div>

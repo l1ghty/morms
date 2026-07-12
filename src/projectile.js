@@ -235,7 +235,7 @@ export class Projectile {
     // Cluster Bomb special: spawns sub-munitions
     if (this.type === 'cluster') {
       for (let i = 0; i < 5; i++) {
-        const angle = -Math.PI / 2 + (i - 2) * 0.25 + (Math.random() - 0.5) * 0.15;
+        const angle = -Math.PI / 2 + (i - 2) * 0.12 + (Math.random() - 0.5) * 0.08;
         const speed = (3.5 + Math.random() * 2.5) * 1.4; // 40% higher/faster
         const shrap = new Projectile(
           this.x, 

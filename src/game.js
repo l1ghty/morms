@@ -176,6 +176,16 @@ export class Game {
     this.audio.play('weapon_select');
   }
 
+  deductAmmo(weapon) {
+    if (weapon.ammo > 0) {
+      weapon.ammo--;
+      this.populateWeaponMenu();
+      if (weapon.ammo === 0) {
+        this.selectWeapon(0);
+      }
+    }
+  }
+
   toggleWeaponMenu(forceState) {
     if (this.state !== GameState.PLAYING && this.state !== GameState.START_TURN) return;
     
@@ -331,6 +341,12 @@ export class Game {
     const wormsPerTeam = wormCountSelect ? parseInt(wormCountSelect.value, 10) : 3;
     
     this.settings = { mapType, wormsPerTeam, mode: 'online' };
+    
+    const lobbyWorms = document.getElementById('lobby-worm-count-select');
+    const lobbyMap = document.getElementById('lobby-map-type-select');
+    if (lobbyWorms) lobbyWorms.value = wormsPerTeam.toString();
+    if (lobbyMap) lobbyMap.value = mapType;
+    
     this.mp.createRoom(roomName, playerName, mapType, wormsPerTeam);
   }
 
@@ -592,52 +608,6 @@ export class Game {
       document.getElementById('handover-screen').classList.add('hidden');
     }
 
-    // Update active worm HUD
-    if (this.activeWorm && team) {
-      const activeWormPanel = document.querySelector('.active-worm-panel');
-      if (activeWormPanel) {
-        activeWormPanel.className = `hud-panel active-worm-panel ${team.id}-team`;
-      }
-      const activeTeamName = document.getElementById('active-team-name');
-      if (activeTeamName) activeTeamName.textContent = team.name;
-      const activeWormName = document.getElementById('active-worm-name');
-      if (activeWormName) activeWormName.textContent = this.activeWorm.name;
-      const activeWormHealthText = document.getElementById('active-worm-health-text');
-      if (activeWormHealthText) activeWormHealthText.textContent = `${this.activeWorm.health} HP`;
-      const activeWormHealthBar = document.getElementById('active-worm-health-bar');
-      if (activeWormHealthBar) activeWormHealthBar.style.width = `${this.activeWorm.health}%`;
-    }
-
-    // Update turn timer HUD
-    const turnTimerEl = document.getElementById('turn-timer');
-    if (turnTimerEl) {
-      turnTimerEl.textContent = this.turnTimer;
-    }
-
-    // Update wind HUD
-    const arrow = document.getElementById('wind-direction-arrow');
-    const bar = document.getElementById('wind-bar');
-    const windText = document.getElementById('wind-text');
-    if (arrow && bar && windText) {
-      if (this.wind.strength === 0) {
-        arrow.style.transform = 'rotate(0deg)';
-        bar.style.width = '0%';
-        windText.textContent = 'Calm (0 km/h)';
-      } else {
-        const rot = this.wind.strength > 0 ? 0 : 180;
-        arrow.style.transform = `rotate(${rot}deg)`;
-        const pct = Math.abs(this.wind.strength) / 0.15 * 100;
-        bar.style.width = `${pct}%`;
-        windText.textContent = `${Math.round(Math.abs(this.wind.strength) * 200)} km/h`;
-      }
-    }
-
-    // Update charge HUD
-    const chargeBar = document.getElementById('charge-bar');
-    if (chargeBar) {
-      chargeBar.style.width = `${this.chargePower}%`;
-    }
-
     // Show Handover overlay if transitioned to HANDOVER
     const handoverScreen = document.getElementById('handover-screen');
     if (this.state === GameState.HANDOVER && handoverScreen && handoverScreen.classList.contains('hidden') && this.activeWorm && team) {
@@ -648,6 +618,7 @@ export class Game {
       handoverSubtitle.textContent = `Get ready, ${team.name}!`;
       handoverWormName.textContent = `${this.activeWorm.name} is up next`;
 
+      // Reset confirmation state and button text
       this.handoverConfirm = false;
       const startBtn = document.getElementById('handover-start-btn');
       if (startBtn) {
@@ -689,6 +660,87 @@ export class Game {
       facingDir: this.activeWorm.facingDir,
       aimAngle: this.activeWorm.aimAngle
     });
+  }
+
+  updateHUD() {
+    const team = this.teams[this.activeTeamIndex];
+
+    // 1. Update Active Worm Panel
+    if (this.activeWorm && team) {
+      const activeWormPanel = document.querySelector('.active-worm-panel');
+      if (activeWormPanel) {
+        activeWormPanel.className = `hud-panel active-worm-panel ${team.id}-team`;
+      }
+      const activeTeamName = document.getElementById('active-team-name');
+      if (activeTeamName) activeTeamName.textContent = team.name;
+      const activeWormName = document.getElementById('active-worm-name');
+      if (activeWormName) activeWormName.textContent = this.activeWorm.name;
+      const activeWormHealthText = document.getElementById('active-worm-health-text');
+      if (activeWormHealthText) activeWormHealthText.textContent = `${this.activeWorm.health} HP`;
+      const activeWormHealthBar = document.getElementById('active-worm-health-bar');
+      if (activeWormHealthBar) activeWormHealthBar.style.width = `${this.activeWorm.health}%`;
+    }
+
+    // 2. Update Turn Timer
+    const turnTimerEl = document.getElementById('turn-timer');
+    if (turnTimerEl) {
+      if (this.state === GameState.RETREAT) {
+        turnTimerEl.textContent = `${this.turnTimer}s RETREAT`;
+      } else if (this.state === GameState.CLEANUP) {
+        turnTimerEl.textContent = 'Turn End';
+      } else {
+        turnTimerEl.textContent = this.turnTimer;
+      }
+    }
+
+    // 3. Update Wind HUD
+    const arrow = document.getElementById('wind-direction-arrow');
+    const bar = document.getElementById('wind-bar');
+    const windText = document.getElementById('wind-text');
+    if (arrow && bar && windText) {
+      if (this.wind.strength === 0) {
+        arrow.style.transform = 'rotate(0deg)';
+        bar.style.width = '0%';
+        windText.textContent = 'Calm (0 km/h)';
+      } else {
+        const rot = this.wind.strength > 0 ? 0 : 180;
+        arrow.style.transform = `rotate(${rot}deg)`;
+        const pct = Math.abs(this.wind.strength) / 0.15 * 100;
+        bar.style.width = `${pct}%`;
+        windText.textContent = `${Math.round(Math.abs(this.wind.strength) * 200)} km/h`;
+      }
+    }
+
+    // 4. Update Charge HUD
+    const chargeBar = document.getElementById('charge-bar');
+    if (chargeBar) {
+      chargeBar.style.width = `${this.chargePower}%`;
+    }
+
+    // 5. Update Teams HP HUD
+    const container = document.getElementById('teams-hp-container');
+    if (container) {
+      container.innerHTML = '';
+      this.teams.forEach(t => {
+        const teamWorms = this.worms.filter(w => w.teamName === t.name);
+        const currentHealth = teamWorms.reduce((sum, w) => sum + w.health, 0);
+        if (!t.maxHealth || t.maxHealth < currentHealth) {
+          t.maxHealth = Math.max(currentHealth, 100);
+        }
+        const pct = Math.min((currentHealth / t.maxHealth) * 100, 100);
+        
+        const row = document.createElement('div');
+        row.className = 'team-hp-row';
+        row.innerHTML = `
+          <span class="team-hp-name ${t.id}-team-text">${t.name}</span>
+          <div class="team-hp-bar-wrapper">
+            <div class="team-hp-bar ${t.id}-team-bar" style="width: ${pct}%;"></div>
+          </div>
+          <span class="team-hp-val">${currentHealth} HP</span>
+        `;
+        container.appendChild(row);
+      });
+    }
   }
 
   carveTerrain(x, y, radius) {
@@ -849,6 +901,10 @@ export class Game {
     }
     
     if (this.isOnline && this.isLocalPlayerTurn && !fromSync) {
+      if (this.autoStartTimer) {
+        clearTimeout(this.autoStartTimer);
+        this.autoStartTimer = null;
+      }
       this.handoverConfirm = false;
       this.mp.send({ type: 'confirm_start' });
       const startBtn = document.getElementById('handover-start-btn');
@@ -1092,10 +1148,7 @@ export class Game {
       this.audio.play('airstrike_siren');
       
       if (this.isOnline) {
-        if (weapon.ammo > 0) {
-          weapon.ammo--;
-          this.populateWeaponMenu();
-        }
+        this.deductAmmo(weapon);
         return;
       }
       
@@ -1113,10 +1166,7 @@ export class Game {
       }, 1000);
       
       // Deduct ammo
-      if (weapon.ammo > 0) {
-        weapon.ammo--;
-        this.populateWeaponMenu();
-      }
+      this.deductAmmo(weapon);
       
       this.startRetreat(3);
     }
@@ -1169,10 +1219,7 @@ export class Game {
       }
       
       // Deduct ammo
-      if (weapon.ammo > 0) {
-        weapon.ammo--;
-        this.populateWeaponMenu();
-      }
+      this.deductAmmo(weapon);
       
       // Reset charge
       this.chargePower = 0;
@@ -1200,8 +1247,7 @@ export class Game {
       this.projectiles.push(proj);
       this.camera.target = proj;
       
-      if (weapon.ammo > 0) weapon.ammo--;
-      this.populateWeaponMenu();
+      this.deductAmmo(weapon);
       this.startRetreat(5);
     } 
     else if (weapon.id === 'holy') {
@@ -1210,8 +1256,7 @@ export class Game {
       this.projectiles.push(proj);
       this.camera.target = proj;
       
-      if (weapon.ammo > 0) weapon.ammo--;
-      this.populateWeaponMenu();
+      this.deductAmmo(weapon);
       this.startRetreat(5);
     } 
     else if (weapon.id === 'dynamite') {
@@ -1221,8 +1266,7 @@ export class Game {
       this.projectiles.push(proj);
       this.camera.target = proj;
       
-      if (weapon.ammo > 0) weapon.ammo--;
-      this.populateWeaponMenu();
+      this.deductAmmo(weapon);
       this.startRetreat(5);
     }
     else if (weapon.id === 'blowtorch') {
@@ -1259,8 +1303,7 @@ export class Game {
         step++;
       }, 80);
       
-      if (weapon.ammo > 0) weapon.ammo--;
-      this.populateWeaponMenu();
+      this.deductAmmo(weapon);
     }
     
     // Reset charge
@@ -1312,6 +1355,11 @@ export class Game {
     document.getElementById('stat-turns').textContent = this.turnsPlayed;
     document.getElementById('stat-damage').textContent = Math.round(this.totalDamageDealt);
     document.getElementById('stat-drowns').textContent = this.wormsDrowned;
+    
+    const menuBtn = document.getElementById('main-menu-btn');
+    if (menuBtn) {
+      menuBtn.textContent = this.isOnline ? 'Return to Lobby' : 'Main Menu';
+    }
     
     if (this.isOnline && !this.fromGameOverSync) {
       this.mp.send({
@@ -1495,14 +1543,28 @@ export class Game {
       
       if (this.state === GameState.CLEANUP) {
         // Check if all projectiles are gone, explosions finished, and worms stopped moving
-        const allSettled = this.projectiles.length === 0 && 
+        const unsettledProjectiles = this.projectiles.length;
+        const allSettled = unsettledProjectiles === 0 && 
                            this.particles.isSettle() && 
                            this.worms.every(w => w.isSettled());
+        
+        if (!allSettled) {
+          this.cleanupWaitFrames = (this.cleanupWaitFrames || 0) + 1;
+          // Force cleanup if it takes more than 2.5 seconds (150 frames) and NO projectiles remain
+          if (this.cleanupWaitFrames > 150 && unsettledProjectiles === 0) {
+            this.cleanupWaitFrames = 0;
+            this.setupNextTurn();
+            return;
+          }
+        }
+        
         if (allSettled) {
+          this.cleanupWaitFrames = 0;
           this.setupNextTurn();
         }
       }
     }
+    this.updateHUD();
   }
 
   handlePlayingInput(dt) {

@@ -143,7 +143,7 @@ export class ServerWorm {
 
   isSettled() {
     if (this.health <= 0) return true;
-    return !this.isFalling && Math.abs(this.vx) < 0.05 && Math.abs(this.vy) < 0.05;
+    return !this.isFalling && Math.abs(this.vx) < 0.1 && Math.abs(this.vy) < 0.1;
   }
 
   aim(dir, dt) {
@@ -233,7 +233,13 @@ export class ServerWorm {
       return;
     }
     
-    this.vy += 0.15 * dt;
+    if (this.isFalling) {
+      this.vy += this.game.gravity * dt;
+      this.vx *= Math.pow(0.98, dt);
+    } else {
+      this.vx *= Math.pow(0.92, dt);
+    }
+    
     this.x += this.vx * dt;
     this.y += this.vy * dt;
     
@@ -304,7 +310,7 @@ export class ServerWorm {
     } else {
       let hasGround = false;
       for (let ox = -this.halfW + 2; ox <= this.halfW - 2; ox += 2) {
-        if (terrain.isSolid(this.x + ox, feetY + 1.5)) {
+        if (terrain.isSolid(this.x + ox, feetY + 2.5)) {
           hasGround = true;
           break;
         }
@@ -412,10 +418,10 @@ export class ServerProjectile {
       return;
     }
 
-    this.vy += 0.12 * dt;
+    this.vy += this.game.gravity * dt;
 
     if (this.affectedByWind && this.game.wind) {
-      this.vx += this.game.wind.x * 0.25 * dt;
+      this.vx += this.game.wind.x * 0.04 * dt;
     }
 
     this.x += this.vx * dt;
@@ -510,7 +516,7 @@ export class ServerProjectile {
     
     if (this.type === 'cluster') {
       for (let i = 0; i < 5; i++) {
-        const angle = -Math.PI / 2 + (i - 2) * 0.25 + (Math.random() - 0.5) * 0.15;
+        const angle = -Math.PI / 2 + (i - 2) * 0.12 + (Math.random() - 0.5) * 0.08;
         const speed = (3.5 + Math.random() * 2.5) * 1.4;
         const shrap = new ServerProjectile(
           this.x,
@@ -532,6 +538,7 @@ export class ServerGame {
     this.width = 1600;
     this.height = 900;
     this.waterLevel = 820;
+    this.gravity = 0.22;
     
     this.projectileIdCounter = 1;
     this.terrain = new ServerTerrain(this.width, this.height, room.mapType);
@@ -558,6 +565,13 @@ export class ServerGame {
     this.chargeRate = 1.8;
     this.selectedWeaponIndex = 0;
     this.selectedFuseTime = 3;
+    
+    this.activePlayerKeys = {
+      ArrowLeft: false,
+      ArrowRight: false,
+      ArrowUp: false,
+      ArrowDown: false
+    };
     
     this.spawnWorms();
   }
@@ -660,8 +674,15 @@ export class ServerGame {
     }
     
     this.activeWorm = nextWorm;
+    this.selectedWeaponIndex = team.selectedWeaponIndex; // Sync active weapon index for new team
     this.state = 'HANDOVER';
     this.turnTimer = 'Ready';
+    this.activePlayerKeys = {
+      ArrowLeft: false,
+      ArrowRight: false,
+      ArrowUp: false,
+      ArrowDown: false
+    };
   }
 
   startTurn(windStrength = null) {
@@ -769,11 +790,21 @@ export class ServerGame {
     });
   }
 
-  fireActiveWeapon(vx, vy, spawnX, spawnY) {
+  fireActiveWeapon(vx, vy, spawnX, spawnY, clientWeaponId = null) {
     const team = this.teams[this.activeTeamIndex];
-    this.selectedWeaponIndex = team.selectedWeaponIndex;
+    let weaponId;
     
-    const weaponId = ['bazooka', 'grenade', 'cluster', 'holy', 'dynamite', 'airstrike', 'blowtorch'][this.selectedWeaponIndex];
+    if (clientWeaponId) {
+      weaponId = clientWeaponId;
+      const idx = ['bazooka', 'grenade', 'cluster', 'holy', 'dynamite', 'airstrike', 'blowtorch'].indexOf(weaponId);
+      if (idx !== -1) {
+        team.selectedWeaponIndex = idx;
+        this.selectedWeaponIndex = idx;
+      }
+    } else {
+      this.selectedWeaponIndex = team.selectedWeaponIndex;
+      weaponId = ['bazooka', 'grenade', 'cluster', 'holy', 'dynamite', 'airstrike', 'blowtorch'][this.selectedWeaponIndex];
+    }
     
     if (weaponId === 'blowtorch') {
       this.state = 'ACTION';
@@ -829,6 +860,22 @@ export class ServerGame {
     let livingWormsCount = {};
     livingWormsCount[this.teams[0].name] = 0;
     livingWormsCount[this.teams[1].name] = 0;
+    if (this.activeWorm && this.activeWorm.health > 0) {
+      if (this.state === 'PLAYING' || this.state === 'RETREAT') {
+        let dir = 0;
+        if (this.activePlayerKeys.ArrowLeft) dir = -1;
+        else if (this.activePlayerKeys.ArrowRight) dir = 1;
+        this.activeWorm.move(dir, dt);
+        
+        if (this.state === 'PLAYING') {
+          let aimDir = 0;
+          if (this.activePlayerKeys.ArrowUp) aimDir = -1;
+          else if (this.activePlayerKeys.ArrowDown) aimDir = 1;
+          this.activeWorm.aim(aimDir, dt);
+        }
+      }
+    }
+
     this.worms.forEach(w => {
       w.update(dt);
       if (w.health > 0) {
@@ -875,8 +922,27 @@ export class ServerGame {
     }
     
     if (this.state === 'CLEANUP') {
-      const allSettled = this.projectiles.length === 0 && this.worms.every(w => w.isSettled());
+      const unsettledProjectiles = this.projectiles.length;
+      const unsettledWorms = this.worms.filter(w => !w.isSettled());
+      const allSettled = unsettledProjectiles === 0 && unsettledWorms.length === 0;
+      
+      if (!allSettled) {
+        this.cleanupWaitFrames = (this.cleanupWaitFrames || 0) + 1;
+        if (this.cleanupWaitFrames % 60 === 0) {
+          console.log(`[CLEANUP DELAY] Waiting on ${unsettledProjectiles} projectiles. Unsettled worms: ${unsettledWorms.map(w => w.name + '(vx:' + w.vx.toFixed(3) + ' vy:' + w.vy.toFixed(3) + ' fall:' + w.isFalling + ')').join(', ')}`);
+        }
+        
+        // Force cleanup if it takes more than 2.5 seconds (150 frames) and NO projectiles remain
+        if (this.cleanupWaitFrames > 150 && unsettledProjectiles === 0) {
+          console.log('[CLEANUP DELAY] Forcing turn end due to timeout!');
+          this.cleanupWaitFrames = 0;
+          this.setupNextTurn();
+          return;
+        }
+      }
+      
       if (allSettled) {
+        this.cleanupWaitFrames = 0;
         this.setupNextTurn();
       }
     }
@@ -909,20 +975,15 @@ export class ServerGame {
       this.selectedFuseTime = data.fuse;
     }
 
+    if (data.type === 'input' && data.keys) {
+      this.activePlayerKeys.ArrowLeft = !!(data.keys['ArrowLeft'] || data.keys['KeyA'] || data.keys['a']);
+      this.activePlayerKeys.ArrowRight = !!(data.keys['ArrowRight'] || data.keys['KeyD'] || data.keys['d']);
+      this.activePlayerKeys.ArrowUp = !!(data.keys['ArrowUp'] || data.keys['KeyW'] || data.keys['w']);
+      this.activePlayerKeys.ArrowDown = !!(data.keys['ArrowDown'] || data.keys['KeyS'] || data.keys['s']);
+    }
+
     if (this.state === 'PLAYING') {
       if (worm && worm.health > 0) {
-        if (data.keys) {
-          let dir = 0;
-          if (data.keys['ArrowLeft'] || data.keys['KeyA'] || data.keys['a']) dir = -1;
-          else if (data.keys['ArrowRight'] || data.keys['KeyD'] || data.keys['d']) dir = 1;
-          worm.move(dir, 1);
-          
-          let aimDir = 0;
-          if (data.keys['ArrowUp'] || data.keys['KeyW'] || data.keys['w']) aimDir = -1;
-          else if (data.keys['ArrowDown'] || data.keys['KeyS'] || data.keys['s']) aimDir = 1;
-          worm.aim(aimDir, 1);
-        }
-        
         if (data.type === 'jump') {
           worm.jump(data.isBackflip);
         }
@@ -930,6 +991,10 @@ export class ServerGame {
         if (data.type === 'start_charge') {
           this.state = 'FIRING';
           this.chargePower = 0;
+        }
+
+        if (data.type === 'fire' && data.weaponId === 'airstrike') {
+          this.fireActiveWeapon(data.vx, data.vy, data.spawnX, data.spawnY, data.weaponId);
         }
       }
     }
@@ -939,7 +1004,7 @@ export class ServerGame {
         this.chargePower = data.chargePower;
       }
       if (data.type === 'fire') {
-        this.fireActiveWeapon(data.vx, data.vy, data.spawnX, data.spawnY);
+        this.fireActiveWeapon(data.vx, data.vy, data.spawnX, data.spawnY, data.weaponId);
       }
     }
     

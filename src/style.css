@@ -419,6 +419,44 @@ h3 {
   border-color: var(--text-accent);
 }
 
+.mode-buttons-group {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.mode-btn {
+  flex: 1;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-family: var(--font-hud);
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.15s, box-shadow 0.2s;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-align: center;
+  outline: none;
+}
+
+.btn-primary-style {
+  background: #10b981; /* Vibrant primary green */
+  color: white;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+}
+
+.btn-primary-style:hover {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.45);
+}
+
+.btn-primary-style:active {
+  transform: translateY(0);
+}
+
 .controls-hint {
   text-align: left;
 }
@@ -721,5 +759,70 @@ h3 {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(74, 222, 128, 0.3);
   transform: translateY(-1px);
+}
+
+/* Teams HP Panel Styles */
+.teams-hp-panel {
+  min-width: 220px;
+}
+
+.teams-hp-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.team-hp-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.team-hp-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  min-width: 85px;
+}
+
+.team-hp-bar-wrapper {
+  flex-grow: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+  min-width: 60px;
+}
+
+.team-hp-bar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.team-hp-bar.red-team-bar {
+  background: var(--color-red-team);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+}
+
+.team-hp-bar.blue-team-bar {
+  background: var(--color-blue-team);
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+}
+
+.team-hp-val {
+  font-size: 0.8rem;
+  font-weight: 600;
+  min-width: 50px;
+  text-align: right;
+  color: var(--text-secondary);
+}
+
+.red-team-text {
+  color: var(--color-red-team);
+}
+
+.blue-team-text {
+  color: var(--color-blue-team);
 }
 

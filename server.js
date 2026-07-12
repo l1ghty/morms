@@ -80,7 +80,10 @@ wss.on('connection', (ws) => {
         const room = rooms[roomId];
         
         if (room && room.status === 'waiting') {
-          const p2Name = data.playerName ? data.playerName.trim() : 'Blue Team';
+          let p2Name = data.playerName ? data.playerName.trim() : 'Blue Team';
+          if (p2Name === room.p1Name) {
+            p2Name = `${p2Name} (2)`;
+          }
           
           room.p2 = ws;
           room.p2Name = p2Name;
@@ -110,7 +113,9 @@ wss.on('connection', (ws) => {
           room.p2.send(JSON.stringify({
             type: 'joined_waiting_host',
             hostName: room.p1Name,
-            opponentName: p2Name
+            opponentName: p2Name,
+            mapType: room.mapType,
+            wormsPerTeam: room.wormsPerTeam
           }));
           
           broadcastRoomList();
@@ -120,7 +125,41 @@ wss.on('connection', (ws) => {
             message: 'Room is full or no longer exists.'
           }));
         }
-      } 
+      }
+      else if (data.type === 'update_settings') {
+        const roomId = ws.roomId;
+        const room = rooms[roomId];
+        if (room && ws.playerNumber === 1 && room.status !== 'playing') {
+          room.wormsPerTeam = data.wormsPerTeam;
+          room.mapType = data.mapType;
+          console.log(`Room ${roomId} settings updated: worms=${room.wormsPerTeam}, map=${room.mapType}`);
+          
+          if (room.p2) {
+            room.p2.send(JSON.stringify({
+              type: 'settings_updated',
+              wormsPerTeam: room.wormsPerTeam,
+              mapType: room.mapType
+            }));
+          }
+          broadcastRoomList();
+        }
+      }
+      else if (data.type === 'return_to_lobby') {
+        const roomId = ws.roomId;
+        const room = rooms[roomId];
+        if (room) {
+          if (room.status === 'playing') {
+            room.status = 'ready';
+            if (room.gameInterval) {
+              clearInterval(room.gameInterval);
+              room.gameInterval = null;
+            }
+            room.game = null;
+            console.log(`Room ${roomId} returning to lobby`);
+          }
+          ws.send(JSON.stringify({ type: 'back_to_lobby' }));
+        }
+      }
       else if (data.type === 'host_start') {
         const roomId = ws.roomId;
         const room = rooms[roomId];
@@ -169,7 +208,7 @@ wss.on('connection', (ws) => {
                 state: room.game.state,
                 activeWormId: room.game.activeWorm ? room.game.activeWorm.id : null,
                 activeTeamIndex: room.game.activeTeamIndex,
-                turnTimer: room.game.turnTimer,
+                turnTimer: room.game.state === 'RETREAT' ? room.game.retreatTimer : room.game.turnTimer,
                 windStrength: room.game.wind.strength,
                 chargePower: room.game.chargePower,
                 selectedWeaponIndex: room.game.selectedWeaponIndex,
