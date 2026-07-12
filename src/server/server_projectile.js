@@ -1,4 +1,4 @@
-import { setupWeaponProperties, handleTerrainBounce } from './physics.js';
+import { setupWeaponProperties, handleTerrainBounce } from '../common/physics.js';
 
 export class ServerProjectile {
   constructor(x, y, vx, vy, type, game) {

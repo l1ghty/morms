@@ -1,4 +1,4 @@
-import { calculateExplosionImpact } from './physics.js';
+import { calculateExplosionImpact } from '../common/physics.js';
 
 export function createExplosion(x, y, radius, maxDamage, knockbackForce, game) {
   // 1. Carve the terrain canvas and update collision mask

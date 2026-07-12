@@ -1,4 +1,4 @@
-import { GameState } from './constants.js';
+import { GameState } from '../common/constants.js';
 
 export class UIManager {
   constructor(game) {

@@ -1,5 +1,5 @@
 import { createExplosion } from './explosion.js';
-import { setupWeaponProperties, handleTerrainBounce } from './physics.js';
+import { setupWeaponProperties, handleTerrainBounce } from '../common/physics.js';
 
 export class Projectile {
   constructor(x, y, vx, vy, type, game) {

@@ -1,7 +1,7 @@
 import { ServerTerrain } from './server_terrain.js';
 import { ServerWorm } from './server_worm.js';
 import { ServerProjectile } from './server_projectile.js';
-import { calculateExplosionImpact, getSafeSpawnPoint, getActiveTeamWorm, rotateActiveWorm, getRandomWindStrength } from './physics.js';
+import { calculateExplosionImpact, getSafeSpawnPoint, getActiveTeamWorm, rotateActiveWorm, getRandomWindStrength } from '../common/physics.js';
 
 export class ServerGame {
   constructor(room) {

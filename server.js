@@ -1,5 +1,5 @@
 import { WebSocketServer } from 'ws';
-import { ServerGame } from './src/server_game.js';
+import { ServerGame } from './src/server/server_game.js';
 
 const wss = new WebSocketServer({ port: 8080 });
 console.log('WebSocket server is running on port 8080');
