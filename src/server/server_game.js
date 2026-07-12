@@ -2,14 +2,15 @@ import { ServerTerrain } from './server_terrain.js';
 import { ServerWorm } from './server_worm.js';
 import { ServerProjectile } from './server_projectile.js';
 import { calculateExplosionImpact, getSafeSpawnPoint, getActiveTeamWorm, rotateActiveWorm, getRandomWindStrength } from '../common/physics.js';
+import { MAP_WIDTH, MAP_HEIGHT, WATER_LEVEL, GRAVITY, TURN_DURATION, RETREAT_DURATION_SHORT, RETREAT_DURATION_LONG, MAX_CHARGE, CHARGE_RATE_SERVER, DEFAULT_FUSE_TIME, TEAM_RED, TEAM_BLUE, WORM_NAMES_RED, WORM_NAMES_BLUE } from '../common/constants.js';
 
 export class ServerGame {
   constructor(room) {
     this.room = room;
-    this.width = 1600;
-    this.height = 900;
-    this.waterLevel = 820;
-    this.gravity = 0.22;
+    this.width = MAP_WIDTH;
+    this.height = MAP_HEIGHT;
+    this.waterLevel = WATER_LEVEL;
+    this.gravity = GRAVITY;
     
     this.projectileIdCounter = 1;
     this.terrain = new ServerTerrain(this.width, this.height, room.mapType);
@@ -32,10 +33,10 @@ export class ServerGame {
     ];
     
     this.chargePower = 0;
-    this.maxCharge = 100;
-    this.chargeRate = 1.8;
+    this.maxCharge = MAX_CHARGE;
+    this.chargeRate = CHARGE_RATE_SERVER;
     this.selectedWeaponIndex = 0;
-    this.selectedFuseTime = 3;
+    this.selectedFuseTime = DEFAULT_FUSE_TIME;
     
     this.activePlayerKeys = {
       ArrowLeft: false,
@@ -49,9 +50,6 @@ export class ServerGame {
 
   spawnWorms() {
     const segmentWidth = 1200 / this.room.wormsPerTeam;
-    const redNames = ['Boggy', 'Dunky', 'Squeaky', 'Gordo'];
-    const blueNames = ['Slippy', 'Slimy', 'Curly', 'Ziggy'];
-    
     let idCounter = 1;
     for (let i = 0; i < this.room.wormsPerTeam; i++) {
       const minX = 200 + i * segmentWidth;
@@ -61,8 +59,8 @@ export class ServerGame {
       const redPos = getSafeSpawnPoint(minX, midX - 15, this.terrain, this.waterLevel, this.room.mapType);
       const bluePos = getSafeSpawnPoint(midX + 15, maxX, this.terrain, this.waterLevel, this.room.mapType);
       
-      this.worms.push(new ServerWorm(idCounter++, redPos.x, redPos.y, redNames[i % redNames.length], this.teams[0].name, '#ef4444', this));
-      this.worms.push(new ServerWorm(idCounter++, bluePos.x, bluePos.y, blueNames[i % blueNames.length], this.teams[1].name, '#3b82f6', this));
+      this.worms.push(new ServerWorm(idCounter++, redPos.x, redPos.y, WORM_NAMES_RED[i % WORM_NAMES_RED.length], this.teams[0].name, TEAM_RED.color, this));
+      this.worms.push(new ServerWorm(idCounter++, bluePos.x, bluePos.y, WORM_NAMES_BLUE[i % WORM_NAMES_BLUE.length], this.teams[1].name, TEAM_BLUE.color, this));
     }
   }
 
@@ -114,7 +112,7 @@ export class ServerGame {
   startTurn(windStrength = null) {
     if (this.state !== 'HANDOVER') return;
     this.state = 'PLAYING';
-    this.turnTimer = 45;
+    this.turnTimer = TURN_DURATION;
     
     if (windStrength !== null) {
       this.wind.strength = windStrength;
@@ -216,7 +214,7 @@ export class ServerGame {
       this.blowtorchVx = vx;
       this.blowtorchVy = vy;
       this.blowtorchStep = 0;
-      this.startRetreat(2);
+      this.startRetreat(RETREAT_DURATION_SHORT);
       return;
     }
     
@@ -234,7 +232,7 @@ export class ServerGame {
           }, i * 200);
         }
       }, 1000);
-      this.startRetreat(3);
+      this.startRetreat(RETREAT_DURATION_SHORT);
       return;
     }
     
@@ -255,7 +253,7 @@ export class ServerGame {
     }
     
     this.projectiles.push(proj);
-    this.startRetreat(5);
+    this.startRetreat(RETREAT_DURATION_LONG);
   }
 
   update(dt) {

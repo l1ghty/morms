@@ -1,4 +1,5 @@
 import { resolveWormCollision, moveWorm } from '../common/physics.js';
+import { WORM_MAX_HEALTH } from '../common/constants.js';
 
 export class Worm {
   constructor(x, y, name, teamName, teamColor, game) {
@@ -18,7 +19,7 @@ export class Worm {
     this.halfW = this.width / 2;
     this.halfH = this.height / 2;
     
-    this.health = 100;
+    this.health = WORM_MAX_HEALTH;
     this.facingDir = Math.random() > 0.5 ? 1 : -1; // 1 = Right, -1 = Left
     this.aimAngle = -Math.PI / 6; // Aim upwards 30 degrees default
     

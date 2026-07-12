@@ -4,7 +4,7 @@ import { Projectile } from './projectile.js';
 import { ParticleSystem } from './particles.js';
 import { AudioSynth } from './audio.js';
 import { MultiplayerManager } from './multiplayer.js';
-import { GameState, WEAPONS } from '../common/constants.js';
+import { GameState, WEAPONS, MAP_WIDTH, MAP_HEIGHT, WATER_LEVEL, GRAVITY, TURN_DURATION, RETREAT_DURATION_SHORT, RETREAT_DURATION_LONG, DEFAULT_FUSE_TIME, MAX_CHARGE, CHARGE_RATE_CLIENT, CAMERA_LERP_SPEED, TEAM_RED, TEAM_BLUE, WORM_NAMES_RED, WORM_NAMES_BLUE, DEFAULT_SETTINGS } from '../common/constants.js';
 import { UIManager } from './ui_manager.js';
 import { InputManager } from './input_manager.js';
 import { getSafeSpawnPoint, getActiveTeamWorm, rotateActiveWorm, getRandomWindStrength } from '../common/physics.js';
@@ -14,10 +14,10 @@ export class Game {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     
-    this.width = 1600; // Virtual width of the map
-    this.height = 900; // Virtual height of the map
-    this.waterLevel = 820; // Water level line
-    this.gravity = 0.22;
+    this.width = MAP_WIDTH;
+    this.height = MAP_HEIGHT;
+    this.waterLevel = WATER_LEVEL;
+    this.gravity = GRAVITY;
     
     // Core game components
     this.terrain = null;
@@ -29,7 +29,7 @@ export class Game {
     this.audio = new AudioSynth();
     
     // Camera
-    this.camera = { x: 0, y: 0, targetX: 0, targetY: 0, lerpSpeed: 0.05, target: null };
+    this.camera = { x: 0, y: 0, targetX: 0, targetY: 0, lerpSpeed: CAMERA_LERP_SPEED, target: null };
     
     // Input state
     this.keys = {};
@@ -37,11 +37,11 @@ export class Game {
     
     // Game loop & Turn state
     this.state = GameState.LOBBY;
-    this.settings = { wormsPerTeam: 3, mapType: 'island' };
+    this.settings = { ...DEFAULT_SETTINGS };
     
     this.teams = [
-      { id: 'red', name: 'Red Team', color: '#ef4444', activeWormIndex: 0, selectedWeaponIndex: 0 },
-      { id: 'blue', name: 'Blue Team', color: '#3b82f6', activeWormIndex: 0, selectedWeaponIndex: 0 }
+      { ...TEAM_RED,  activeWormIndex: 0, selectedWeaponIndex: 0 },
+      { ...TEAM_BLUE, activeWormIndex: 0, selectedWeaponIndex: 0 }
     ];
     this.activeTeamIndex = 0;
     
@@ -52,7 +52,7 @@ export class Game {
     
     this.activeWorm = null;
     
-    this.turnTimer = 45;
+    this.turnTimer = TURN_DURATION;
     this.timerInterval = null;
     this.retreatTimer = 0;
     this.wind = { x: 0, strength: 0 }; // Wind speed from -0.15 to +0.15
@@ -60,15 +60,15 @@ export class Game {
     // Shooting mechanics
     this.chargePower = 0;
     this.isCharging = false;
-    this.maxCharge = 100;
-    this.chargeRate = 2.5;
+    this.maxCharge = MAX_CHARGE;
+    this.chargeRate = CHARGE_RATE_CLIENT;
     
     this.selectedWeaponIndex = 0;
     this.totalDamageDealt = 0;
     this.wormsDrowned = 0;
     this.turnsPlayed = 0;
     this.cameraLocked = false;
-    this.selectedFuseTime = 3;
+    this.selectedFuseTime = DEFAULT_FUSE_TIME;
     
     // Online Multiplayer properties
     this.mp = new MultiplayerManager(this);
@@ -138,11 +138,11 @@ export class Game {
     
     // Setup team names based on online custom values
     if (this.isOnline) {
-      this.teams[0].name = this.onlineP1Name || 'Red Team';
-      this.teams[1].name = this.onlineP2Name || 'Blue Team';
+      this.teams[0].name = this.onlineP1Name || TEAM_RED.name;
+      this.teams[1].name = this.onlineP2Name || TEAM_BLUE.name;
     } else {
-      this.teams[0].name = 'Red Team';
-      this.teams[1].name = 'Blue Team';
+      this.teams[0].name = TEAM_RED.name;
+      this.teams[1].name = TEAM_BLUE.name;
     }
 
     // Reset Team indices
@@ -165,9 +165,6 @@ export class Game {
         this.worms.push(worm);
       });
     } else {
-      const redNames = ['Boggy', 'Dunky', 'Squeaky', 'Gordo'];
-      const blueNames = ['Slippy', 'Slimy', 'Curly', 'Ziggy'];
-  
       const segmentWidth = 1200 / settings.wormsPerTeam;
       
       for (let i = 0; i < settings.wormsPerTeam; i++) {
@@ -178,11 +175,11 @@ export class Game {
         const redPos = getSafeSpawnPoint(minX, midX - 15, this.terrain, this.waterLevel, settings.mapType);
         const bluePos = getSafeSpawnPoint(midX + 15, maxX, this.terrain, this.waterLevel, settings.mapType);
         
-        const team1Name = this.isOnline ? (this.onlineP1Name || 'Red Team') : 'Red Team';
-        const team2Name = this.isOnline ? (this.onlineP2Name || 'Blue Team') : 'Blue Team';
+        const team1Name = this.isOnline ? (this.onlineP1Name || TEAM_RED.name) : TEAM_RED.name;
+        const team2Name = this.isOnline ? (this.onlineP2Name || TEAM_BLUE.name) : TEAM_BLUE.name;
         
-        this.worms.push(new Worm(redPos.x, redPos.y, redNames[i % redNames.length], team1Name, '#ef4444', this));
-        this.worms.push(new Worm(bluePos.x, bluePos.y, blueNames[i % blueNames.length], team2Name, '#3b82f6', this));
+        this.worms.push(new Worm(redPos.x, redPos.y, WORM_NAMES_RED[i % WORM_NAMES_RED.length], team1Name, TEAM_RED.color, this));
+        this.worms.push(new Worm(bluePos.x, bluePos.y, WORM_NAMES_BLUE[i % WORM_NAMES_BLUE.length], team2Name, TEAM_BLUE.color, this));
       }
     }
     
@@ -564,7 +561,7 @@ export class Game {
     if (chargeBar) chargeBar.style.width = '0%';
     
     this.state = GameState.PLAYING;
-    this.turnTimer = 45;
+    this.turnTimer = TURN_DURATION;
     const turnTimerEl = document.getElementById('turn-timer');
     if (turnTimerEl) turnTimerEl.textContent = this.turnTimer;
     
@@ -632,7 +629,7 @@ export class Game {
       }, 1000);
       
       this.deductAmmo(weapon);
-      this.startRetreat(3);
+      this.startRetreat(RETREAT_DURATION_SHORT);
     }
   }
 
@@ -688,14 +685,14 @@ export class Game {
       const proj = new Projectile(spawnX, spawnY, vx, vy, 'bazooka', this);
       this.projectiles.push(proj);
       this.camera.target = proj;
-      this.startRetreat(5);
+      this.startRetreat(RETREAT_DURATION_LONG);
     } 
     else if (weapon.id === 'grenade') {
       this.audio.play('shoot_grenade');
       const proj = new Projectile(spawnX, spawnY, vx, vy, 'grenade', this);
       this.projectiles.push(proj);
       this.camera.target = proj;
-      this.startRetreat(5);
+      this.startRetreat(RETREAT_DURATION_LONG);
     } 
     else if (weapon.id === 'cluster') {
       this.audio.play('shoot_grenade');
@@ -703,7 +700,7 @@ export class Game {
       this.projectiles.push(proj);
       this.camera.target = proj;
       this.deductAmmo(weapon);
-      this.startRetreat(5);
+      this.startRetreat(RETREAT_DURATION_LONG);
     } 
     else if (weapon.id === 'holy') {
       this.audio.play('shoot_grenade');
@@ -711,7 +708,7 @@ export class Game {
       this.projectiles.push(proj);
       this.camera.target = proj;
       this.deductAmmo(weapon);
-      this.startRetreat(5);
+      this.startRetreat(RETREAT_DURATION_LONG);
     } 
     else if (weapon.id === 'dynamite') {
       this.audio.play('fuse');
@@ -719,7 +716,7 @@ export class Game {
       this.projectiles.push(proj);
       this.camera.target = proj;
       this.deductAmmo(weapon);
-      this.startRetreat(5);
+      this.startRetreat(RETREAT_DURATION_LONG);
     }
     else if (weapon.id === 'blowtorch') {
       this.audio.play('blowtorch');
