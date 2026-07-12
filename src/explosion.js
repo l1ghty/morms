@@ -1,4 +1,3 @@
-import { WEAPONS } from './game.js';
 
 export function createExplosion(x, y, radius, maxDamage, knockbackForce, game) {
   // 1. Carve the terrain canvas and update collision mask
