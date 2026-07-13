@@ -108,15 +108,18 @@ export class BaseProjectile {
     this.isDead = true;
     this.doExplode();
 
-    if (this.type === 'cluster') {
+    if (this.type === 'cluster' || this.type === 'banana') {
+      const shrapType = this.type === 'banana' ? 'banana_shrapnel' : 'cluster_shrapnel';
+      const speedScale = this.type === 'banana' ? 1.8 : 1.4;
       for (let i = 0; i < 5; i++) {
         const angle = -Math.PI / 2 + (i - 2) * 0.12 + (Math.random() - 0.5) * 0.08;
-        const speed = (3.5 + Math.random() * 2.5) * 1.4;
+        const speed = (3.5 + Math.random() * 2.5) * speedScale;
         const shrap = this.createShrapnel(
           this.x,
           this.y - 6,
           Math.cos(angle) * speed,
-          Math.sin(angle) * speed
+          Math.sin(angle) * speed,
+          shrapType
         );
         this.game.projectiles.push(shrap);
       }

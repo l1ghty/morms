@@ -199,6 +199,41 @@ export function setupWeaponProperties(type, selectedFuseTime) {
       props.maxDamage = 45;
       props.knockbackForce = 7.0;
       break;
+    case 'banana':
+      props.radius = 5;
+      props.affectedByWind = false;
+      props.contactFuse = false;
+      props.fuse = selectedFuseTime || 3.0;
+      props.elasticity = 0.75;
+      props.blastRadius = 55;
+      props.maxDamage = 60;
+      props.knockbackForce = 9.0;
+      break;
+    case 'banana_shrapnel':
+      props.radius = 3.5;
+      props.affectedByWind = false;
+      props.contactFuse = false;
+      props.fuse = 1.0 + Math.random() * 1.2;
+      props.elasticity = 0.65;
+      props.blastRadius = 32;
+      props.maxDamage = 35;
+      props.knockbackForce = 6.0;
+      break;
+    case 'super_sheep':
+      props.radius = 6;
+      props.affectedByWind = false;
+      props.contactFuse = true;
+      props.elasticity = 0.5;
+      props.blastRadius = 60;
+      props.maxDamage = 75;
+      props.knockbackForce = 11.0;
+      break;
+    case 'baseball_bat':
+      props.radius = 1;
+      props.blastRadius = 0;
+      props.maxDamage = 30;
+      props.knockbackForce = 16.0;
+      break;
   }
   return props;
 }

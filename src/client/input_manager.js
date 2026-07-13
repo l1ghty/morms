@@ -20,6 +20,19 @@ export class InputManager {
         }
       }
 
+      // If in ACTION state, and active weapon is super_sheep, pressing Space or Enter detonates it!
+      if (this.game.state === GameState.ACTION) {
+        const weapon = this.game.WEAPONS[this.game.selectedWeaponIndex];
+        if (weapon && weapon.id === 'super_sheep') {
+          if (e.code === 'Space' || e.key === ' ' || e.key === 'Spacebar' || e.code === 'Enter' || e.key === 'Enter') {
+            if (this.game.isOnline && !this.game.isLocalPlayerTurn) return;
+            this.game.detonateSheep();
+            e.preventDefault();
+            return;
+          }
+        }
+      }
+
       this.game.keys[e.code] = true;
       if (e.key) {
         this.game.keys[e.key] = true;

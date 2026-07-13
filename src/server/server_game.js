@@ -196,14 +196,14 @@ export class ServerGame {
     
     if (clientWeaponId) {
       weaponId = clientWeaponId;
-      const idx = ['bazooka', 'grenade', 'cluster', 'holy', 'dynamite', 'airstrike', 'blowtorch'].indexOf(weaponId);
+      const idx = ['bazooka', 'grenade', 'cluster', 'holy', 'dynamite', 'airstrike', 'blowtorch', 'banana', 'baseball_bat', 'super_sheep'].indexOf(weaponId);
       if (idx !== -1) {
         team.selectedWeaponIndex = idx;
         this.selectedWeaponIndex = idx;
       }
     } else {
       this.selectedWeaponIndex = team.selectedWeaponIndex;
-      weaponId = ['bazooka', 'grenade', 'cluster', 'holy', 'dynamite', 'airstrike', 'blowtorch'][this.selectedWeaponIndex];
+      weaponId = ['bazooka', 'grenade', 'cluster', 'holy', 'dynamite', 'airstrike', 'blowtorch', 'banana', 'baseball_bat', 'super_sheep'][this.selectedWeaponIndex];
     }
     
     if (weaponId === 'blowtorch') {
@@ -214,6 +214,36 @@ export class ServerGame {
       this.blowtorchVx = vx;
       this.blowtorchVy = vy;
       this.blowtorchStep = 0;
+      this.startRetreat(RETREAT_DURATION_SHORT);
+      return;
+    }
+    
+    if (weaponId === 'baseball_bat') {
+      this.state = 'ACTION';
+      this.broadcastAudio('shoot_bazooka'); // swing sound
+      
+      let targetWorm = null;
+      let minDist = 45;
+      for (const w of this.worms) {
+        if (w !== this.activeWorm && w.health > 0) {
+          const dx = w.x - this.activeWorm.x;
+          const dy = w.y - this.activeWorm.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < minDist) {
+            minDist = dist;
+            targetWorm = w;
+          }
+        }
+      }
+      
+      if (targetWorm) {
+        this.broadcastAudio('bounce'); // hit sound
+        targetWorm.damage(30);
+        targetWorm.vx = this.activeWorm.facingDir * 14;
+        targetWorm.vy = -10;
+        targetWorm.isFalling = true;
+      }
+      
       this.startRetreat(RETREAT_DURATION_SHORT);
       return;
     }
@@ -248,6 +278,10 @@ export class ServerGame {
       proj = new ServerProjectile(spawnX, spawnY, vx, vy, 'cluster', this);
     } else if (weaponId === 'holy') {
       proj = new ServerProjectile(spawnX, spawnY, vx, vy, 'holy', this);
+    } else if (weaponId === 'banana') {
+      proj = new ServerProjectile(spawnX, spawnY, vx, vy, 'banana', this);
+    } else if (weaponId === 'super_sheep') {
+      proj = new ServerProjectile(spawnX, spawnY, vx, vy, 'super_sheep', this);
     } else if (weaponId === 'dynamite') {
       proj = new ServerProjectile(this.activeWorm.x, this.activeWorm.y - 10, vx, vy, 'dynamite', this);
     }
@@ -410,6 +444,14 @@ export class ServerGame {
     if (this.state === 'HANDOVER') {
       if (data.type === 'confirm_start') {
         this.startTurn();
+      }
+    }
+
+    if (data.type === 'detonate_sheep') {
+      for (const proj of this.projectiles) {
+        if (proj.type === 'super_sheep' && !proj.isDead) {
+          proj.explode();
+        }
       }
     }
   }

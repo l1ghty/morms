@@ -507,17 +507,6 @@ export class Game {
     
     if (this.isOnline && !this.isLocalPlayerTurn && !fromSync) return;
     
-    if (this.isOnline && this.isLocalPlayerTurn && !fromSync && !this.handoverConfirm) {
-      this.handoverConfirm = true;
-      const startBtn = document.getElementById('handover-start-btn');
-      if (startBtn) {
-        startBtn.textContent = 'Confirm Start';
-        startBtn.classList.add('confirming');
-      }
-      this.audio.play('weapon_select');
-      return;
-    }
-    
     if (this.isOnline && this.isLocalPlayerTurn && !fromSync) {
       this.handoverConfirm = false;
       this.mp.send({ type: 'confirm_start' });
@@ -528,19 +517,9 @@ export class Game {
       return;
     }
     
-    if (!this.isOnline && !this.handoverConfirm) {
-      this.handoverConfirm = true;
-      const startBtn = document.getElementById('handover-start-btn');
-      if (startBtn) {
-        startBtn.textContent = 'Confirm Start';
-        startBtn.classList.add('confirming');
-      }
-      this.audio.play('weapon_select');
-      return;
-    }
-    
     this.handoverConfirm = false;
     this.ui.hideHandover();
+    this.camera.target = null;
     
     if (windStrength !== null) {
       this.wind.strength = windStrength;
@@ -587,7 +566,28 @@ export class Game {
     }, 1000);
   }
 
+  detonateSheep() {
+    let explodedAny = false;
+    for (const proj of this.projectiles) {
+      if (proj.type === 'super_sheep' && !proj.isDead) {
+        proj.explode();
+        explodedAny = true;
+      }
+    }
+    
+    if (explodedAny && this.isOnline && this.isLocalPlayerTurn) {
+      this.mp.send({ type: 'detonate_sheep' });
+    }
+  }
+
   handleMouseClick() {
+    if (this.state === GameState.ACTION) {
+      const weapon = this.WEAPONS[this.selectedWeaponIndex];
+      if (weapon && weapon.id === 'super_sheep') {
+        this.detonateSheep();
+        return;
+      }
+    }
     if (this.state !== GameState.PLAYING) return;
     if (this.isOnline && !this.isLocalPlayerTurn) return;
     
@@ -666,8 +666,10 @@ export class Game {
     if (this.isOnline) {
       if (weapon.id === 'bazooka') {
         this.audio.play('shoot_bazooka');
-      } else if (['grenade', 'cluster', 'holy'].includes(weapon.id)) {
+      } else if (['grenade', 'cluster', 'holy', 'banana', 'super_sheep'].includes(weapon.id)) {
         this.audio.play('shoot_grenade');
+      } else if (weapon.id === 'baseball_bat') {
+        this.audio.play('shoot_bazooka');
       } else if (weapon.id === 'dynamite') {
         this.audio.play('fuse');
       } else if (weapon.id === 'blowtorch') {
@@ -702,6 +704,53 @@ export class Game {
       this.deductAmmo(weapon);
       this.startRetreat(RETREAT_DURATION_LONG);
     } 
+    else if (weapon.id === 'banana') {
+      this.audio.play('shoot_grenade');
+      const proj = new Projectile(spawnX, spawnY, vx, vy, 'banana', this);
+      this.projectiles.push(proj);
+      this.camera.target = proj;
+      this.deductAmmo(weapon);
+      this.startRetreat(RETREAT_DURATION_LONG);
+    }
+    else if (weapon.id === 'super_sheep') {
+      this.audio.play('shoot_grenade');
+      const proj = new Projectile(spawnX, spawnY, vx, vy, 'super_sheep', this);
+      this.projectiles.push(proj);
+      this.camera.target = proj;
+      this.deductAmmo(weapon);
+      this.startRetreat(RETREAT_DURATION_LONG);
+    }
+    else if (weapon.id === 'baseball_bat') {
+      this.audio.play('shoot_bazooka');
+      let targetWorm = null;
+      let minDist = 45;
+      for (const w of this.worms) {
+        if (w !== worm && w.health > 0) {
+          const dx = w.x - worm.x;
+          const dy = w.y - worm.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < minDist) {
+            minDist = dist;
+            targetWorm = w;
+          }
+        }
+      }
+      
+      if (targetWorm) {
+        this.audio.play('bounce');
+        targetWorm.damage(30);
+        targetWorm.vx = worm.facingDir * 16;
+        targetWorm.vy = -12;
+        targetWorm.isFalling = true;
+        this.camera.target = targetWorm;
+        this.particles.spawnBurst(targetWorm.x, targetWorm.y, 'fire', 8);
+        this.particles.spawnText(targetWorm.x, targetWorm.y - 20, 'WHACK!', '#f59e0b');
+      } else {
+        this.camera.target = worm;
+      }
+      this.deductAmmo(weapon);
+      this.startRetreat(RETREAT_DURATION_SHORT);
+    }
     else if (weapon.id === 'holy') {
       this.audio.play('shoot_grenade');
       const proj = new Projectile(spawnX, spawnY, vx, vy, 'holy', this);
@@ -1030,6 +1079,9 @@ export class Game {
     if (this.projectiles.length > 0) {
       focusX = this.projectiles[0].x;
       focusY = this.projectiles[0].y;
+    } else if (this.camera.target) {
+      focusX = this.camera.target.x;
+      focusY = this.camera.target.y;
     } else if (this.activeWorm) {
       focusX = this.activeWorm.x;
       focusY = this.activeWorm.y;

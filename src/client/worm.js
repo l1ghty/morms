@@ -171,6 +171,49 @@ export class Worm extends BaseWorm {
         ctx.lineWidth = 1;
         ctx.beginPath(); ctx.moveTo(4, -5); ctx.lineTo(4, -2); ctx.moveTo(2, -4); ctx.lineTo(6, -4); ctx.stroke();
       }
+    } else if (weaponId === 'banana') {
+      ctx.fillStyle = '#facc15';
+      ctx.strokeStyle = '#854d0e';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.arc(4, 0, 3, 0.25 * Math.PI, 1.25 * Math.PI, false);
+      ctx.arc(4, 0, 2, 1.25 * Math.PI, 0.25 * Math.PI, true);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    } else if (weaponId === 'baseball_bat') {
+      ctx.fillStyle = '#d97706'; // wood color
+      ctx.strokeStyle = '#78350f'; // dark wood border
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, -1.5);
+      ctx.lineTo(13, -3);
+      ctx.lineTo(13, 2);
+      ctx.lineTo(0, 0.5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      // Grip
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-2, -1, 3, 1.8);
+    } else if (weaponId === 'super_sheep') {
+      ctx.fillStyle = '#ef4444'; // cape
+      ctx.beginPath();
+      ctx.moveTo(-1, 0);
+      ctx.lineTo(-6, -3);
+      ctx.lineTo(-4, 3);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff'; // fluffy body
+      ctx.beginPath();
+      ctx.arc(3, 0, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#fca5a5'; // head
+      ctx.beginPath();
+      ctx.arc(5, -0.5, 1.8, 0, Math.PI * 2);
+      ctx.fill();
     } else if (weaponId === 'dynamite') {
       ctx.fillStyle = '#dc2626';
       ctx.fillRect(2, -2, 6, 4);

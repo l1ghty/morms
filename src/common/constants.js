@@ -53,6 +53,9 @@ export const WEAPONS = [
   { id: 'holy',      name: 'Holy Grenade',  ammo:  1, icon: '⛪', desc: 'Massive blast, high bounce. Plays Hallelujah!' },
   { id: 'dynamite',  name: 'Dynamite',      ammo:  2, icon: '🧨', desc: 'Drops at feet. Huge explosion. 5s fuse.' },
   { id: 'airstrike', name: 'Air Strike',    ammo:  1, icon: '✈️', desc: 'Click map to target. 5 missiles drop down.' },
-  { id: 'blowtorch', name: 'Blowtorch',     ammo:  2, icon: '🔥', desc: 'Digs tunnel in terrain. High utility.' }
+  { id: 'blowtorch', name: 'Blowtorch',     ammo:  2, icon: '🔥', desc: 'Digs tunnel in terrain. High utility.' },
+  { id: 'banana',    name: 'Banana Bomb',   ammo:  2, icon: '🍌', desc: 'Wildly bouncy banana. Explodes into 5 bouncing bananas!' },
+  { id: 'baseball_bat', name: 'Baseball Bat', ammo: 2, icon: '🏏', desc: 'Whack a nearby worm to launch them into orbit!' },
+  { id: 'super_sheep', name: 'Super Sheep',  ammo:  2, icon: '🐑', desc: 'Controllable/manual detonation flying sheep!' }
 ];
 

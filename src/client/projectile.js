@@ -16,8 +16,8 @@ export class Projectile extends BaseProjectile {
     createExplosion(this.x, this.y, this.blastRadius, this.maxDamage, this.knockbackForce, this.game);
   }
 
-  createShrapnel(x, y, vx, vy) {
-    return new Projectile(x, y, vx, vy, 'cluster_shrapnel', this.game);
+  createShrapnel(x, y, vx, vy, type = 'cluster_shrapnel') {
+    return new Projectile(x, y, vx, vy, type, this.game);
   }
 
   onWaterHit() {
@@ -25,7 +25,7 @@ export class Projectile extends BaseProjectile {
   }
 
   onFlightParticle(dt) {
-    if (this.type === 'bazooka' || this.type === 'airstrike_missile') {
+    if (this.type === 'bazooka' || this.type === 'airstrike_missile' || this.type === 'super_sheep') {
       if (Math.random() < 0.6 * dt) {
         this.game.particles.spawnBurst(this.x - this.vx * 0.5, this.y - this.vy * 0.5, 'smoke_trail', 1);
       }
@@ -60,6 +60,69 @@ export class Projectile extends BaseProjectile {
       ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
+    } else if (this.type === 'banana' || this.type === 'banana_shrapnel') {
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      ctx.rotate(Math.atan2(this.vy, this.vx) + Math.PI / 4);
+      const r = this.radius;
+      ctx.fillStyle = '#facc15';
+      ctx.strokeStyle = '#854d0e';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(0, 0, r, 0.25 * Math.PI, 1.25 * Math.PI, false);
+      ctx.arc(0, 0, r * 0.7, 1.25 * Math.PI, 0.25 * Math.PI, true);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#16a34a';
+      ctx.beginPath();
+      ctx.arc(0, 0, r, 0.25 * Math.PI, 0.45 * Math.PI);
+      ctx.lineTo(0, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    } else if (this.type === 'super_sheep') {
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      ctx.rotate(Math.atan2(this.vy, this.vx));
+
+      ctx.fillStyle = '#ef4444'; // Red cape
+      ctx.beginPath();
+      ctx.moveTo(-6, 0);
+      ctx.lineTo(-14, -6);
+      ctx.lineTo(-11, 6);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(-3, 4); ctx.lineTo(-3, 7);
+      ctx.moveTo(3, 4); ctx.lineTo(3, 7);
+      ctx.stroke();
+
+      ctx.fillStyle = '#ffffff'; // fluffy body
+      ctx.beginPath();
+      ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(-3, -2, 3.5, 0, Math.PI * 2);
+      ctx.arc(3, 1, 3.5, 0, Math.PI * 2);
+      ctx.arc(-2, 2, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#fca5a5'; // face
+      ctx.beginPath();
+      ctx.arc(this.radius - 1, -1, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#000000';
+      ctx.beginPath();
+      ctx.arc(this.radius, -2, 0.7, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
     } else if (this.type === 'holy') {
       ctx.fillStyle   = '#fbbf24';
       ctx.strokeStyle = '#78350f';
