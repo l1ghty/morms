@@ -29,7 +29,7 @@ export class Game {
     this.audio = new AudioSynth();
     
     // Camera
-    this.camera = { x: 0, y: 0, targetX: 0, targetY: 0, lerpSpeed: CAMERA_LERP_SPEED, target: null };
+    this.camera = { x: 0, y: 0, targetX: 0, targetY: 0, lerpSpeed: CAMERA_LERP_SPEED, target: null, zoom: 1.0, manual: false };
     
     // Input state
     this.keys = {};
@@ -484,6 +484,7 @@ export class Game {
     
     const team = this.teams[this.activeTeamIndex];
     this.camera.target = this.activeWorm;
+    this.camera.manual = false;
     
     const currentWeapon = this.WEAPONS[this.selectedWeaponIndex];
     if (currentWeapon.ammo === 0) {
@@ -520,6 +521,7 @@ export class Game {
     this.handoverConfirm = false;
     this.ui.hideHandover();
     this.camera.target = null;
+    this.camera.manual = false;
     
     if (windStrength !== null) {
       this.wind.strength = windStrength;
@@ -802,6 +804,7 @@ export class Game {
     }
     
     this.chargePower = 0;
+    this.camera.manual = false;
     const chargeBar = document.getElementById('charge-bar');
     if (chargeBar) chargeBar.style.width = '0%';
   }
@@ -1040,6 +1043,12 @@ export class Game {
     
     const goLeft = this.keys['ArrowLeft'] || this.keys['KeyA'] || this.keys['a'] || this.keys['A'];
     const goRight = this.keys['ArrowRight'] || this.keys['KeyD'] || this.keys['d'] || this.keys['D'];
+    const aimUp = this.keys['ArrowUp'] || this.keys['KeyW'] || this.keys['w'] || this.keys['W'];
+    const aimDown = this.keys['ArrowDown'] || this.keys['KeyS'] || this.keys['s'] || this.keys['S'];
+    
+    if (goLeft || goRight || aimUp || aimDown) {
+      this.camera.manual = false;
+    }
     
     if (goLeft) {
       worm.move(-1, dt);
@@ -1050,9 +1059,6 @@ export class Game {
     }
     
     if (this.state === GameState.PLAYING) {
-      const aimUp = this.keys['ArrowUp'] || this.keys['KeyW'] || this.keys['w'] || this.keys['W'];
-      const aimDown = this.keys['ArrowDown'] || this.keys['KeyS'] || this.keys['s'] || this.keys['S'];
-      
       if (aimUp) {
         worm.aim(-1, dt);
       } else if (aimDown) {
@@ -1073,6 +1079,19 @@ export class Game {
   }
 
   updateCamera(dt) {
+    if (this.camera.manual) {
+      this.camera.x = Math.max(0, Math.min(this.camera.x, this.width - this.canvas.width / this.camera.zoom));
+      this.camera.y = Math.max(0, Math.min(this.camera.y, this.height - this.canvas.height / this.camera.zoom));
+      
+      if (this.canvas.width / this.camera.zoom > this.width) {
+        this.camera.x = (this.width - this.canvas.width / this.camera.zoom) / 2;
+      }
+      if (this.canvas.height / this.camera.zoom > this.height) {
+        this.camera.y = (this.height - this.canvas.height / this.camera.zoom) / 2;
+      }
+      return;
+    }
+
     let focusX = this.width / 2;
     let focusY = this.height / 2;
     
@@ -1087,20 +1106,20 @@ export class Game {
       focusY = this.activeWorm.y;
     }
     
-    const targetCamX = focusX - this.canvas.width / 2;
-    const targetCamY = focusY - this.canvas.height / 2;
+    const targetCamX = focusX - (this.canvas.width / 2) / this.camera.zoom;
+    const targetCamY = focusY - (this.canvas.height / 2) / this.camera.zoom;
     
     this.camera.x += (targetCamX - this.camera.x) * this.camera.lerpSpeed * dt;
     this.camera.y += (targetCamY - this.camera.y) * this.camera.lerpSpeed * dt;
     
-    this.camera.x = Math.max(0, Math.min(this.camera.x, this.width - this.canvas.width));
-    this.camera.y = Math.max(0, Math.min(this.camera.y, this.height - this.canvas.height));
+    this.camera.x = Math.max(0, Math.min(this.camera.x, this.width - this.canvas.width / this.camera.zoom));
+    this.camera.y = Math.max(0, Math.min(this.camera.y, this.height - this.canvas.height / this.camera.zoom));
     
-    if (this.canvas.width > this.width) {
-      this.camera.x = (this.width - this.canvas.width) / 2;
+    if (this.canvas.width / this.camera.zoom > this.width) {
+      this.camera.x = (this.width - this.canvas.width / this.camera.zoom) / 2;
     }
-    if (this.canvas.height > this.height) {
-      this.camera.y = (this.height - this.canvas.height) / 2;
+    if (this.canvas.height / this.camera.zoom > this.height) {
+      this.camera.y = (this.height - this.canvas.height / this.camera.zoom) / 2;
     }
   }
 
@@ -1108,6 +1127,7 @@ export class Game {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     
     this.ctx.save();
+    this.ctx.scale(this.camera.zoom, this.camera.zoom);
     this.ctx.translate(-this.camera.x, -this.camera.y);
     
     this.drawBackground();
@@ -1137,7 +1157,8 @@ export class Game {
     gradient.addColorStop(0.5, '#0f172a');
     gradient.addColorStop(1, '#020617');
     this.ctx.fillStyle = gradient;
-    this.ctx.fillRect(this.camera.x, 0, this.canvas.width, this.height);
+    const visibleWidth = this.canvas.width / this.camera.zoom;
+    this.ctx.fillRect(this.camera.x, 0, visibleWidth, this.height);
     
     this.ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
     for (let i = 0; i < 6; i++) {
@@ -1157,12 +1178,13 @@ export class Game {
     this.ctx.beginPath();
     this.ctx.moveTo(this.camera.x, this.waterLevel);
     
-    for (let x = this.camera.x; x <= this.camera.x + this.canvas.width; x += 20) {
+    const visibleWidth = this.canvas.width / this.camera.zoom;
+    for (let x = this.camera.x; x <= this.camera.x + visibleWidth; x += 20) {
       const waveHeight = Math.sin(x * 0.015 + time) * 6 + Math.cos(x * 0.03 - time) * 3;
       this.ctx.lineTo(x, this.waterLevel + waveHeight);
     }
     
-    this.ctx.lineTo(this.camera.x + this.canvas.width, this.height);
+    this.ctx.lineTo(this.camera.x + visibleWidth, this.height);
     this.ctx.lineTo(this.camera.x, this.height);
     this.ctx.closePath();
     this.ctx.fill();
@@ -1173,7 +1195,7 @@ export class Game {
     
     const weapon = this.WEAPONS[this.selectedWeaponIndex];
     if (weapon.id === 'airstrike') {
-      const targetX = this.mouse.x + this.camera.x;
+      const targetX = this.mouse.canvasX;
       this.ctx.strokeStyle = 'rgba(239, 68, 68, 0.4)';
       this.ctx.lineWidth = 1.5;
       this.ctx.setLineDash([5, 5]);

@@ -170,7 +170,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const container = document.getElementById('game-container');
   container.addEventListener('contextmenu', (e) => {
     e.preventDefault();
-    game.toggleWeaponMenu();
+    if (game && game.lastRightMouseDown) {
+      const dx = e.clientX - game.lastRightMouseDown.x;
+      const dy = e.clientY - game.lastRightMouseDown.y;
+      if (Math.hypot(dx, dy) > 5) {
+        return;
+      }
+    }
+    if (game) {
+      game.toggleWeaponMenu();
+    }
   });
 
   // Debug/Test Controls Panel Event Listeners
