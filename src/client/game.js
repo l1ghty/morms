@@ -870,6 +870,14 @@ export class Game {
     
     if (this.isOnline) {
       this.projectiles.forEach(p => {
+        // Run client-side physics simulation for smooth prediction
+        p.vy += this.gravity * dt;
+        if (p.affectedByWind && this.wind) {
+          p.vx += this.wind.x * 0.04 * dt;
+        }
+        p.vx *= Math.pow(0.992, dt);
+        p.vy *= Math.pow(0.992, dt);
+
         p.x += p.vx * dt;
         p.y += p.vy * dt;
         
@@ -898,6 +906,14 @@ export class Game {
       });
 
       this.worms.forEach(w => {
+        // Run client-side physics simulation for smooth falling/movement prediction
+        if (w.isFalling) {
+          w.vy += this.gravity * dt;
+          w.vx *= Math.pow(0.98, dt);
+        } else {
+          w.vx *= Math.pow(0.92, dt);
+        }
+
         w.x += w.vx * dt;
         w.y += w.vy * dt;
         

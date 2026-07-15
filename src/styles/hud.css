@@ -314,3 +314,84 @@
 .blue-team-text {
   color: var(--color-blue-team);
 }
+
+/* --- Multiplayer Turn Banner & Visuals --- */
+.turn-notification-banner {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  padding: 8px 24px;
+  border-radius: 30px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  font-family: var(--font-ui);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  backdrop-filter: blur(16px) saturate(120%);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  pointer-events: none;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  opacity: 1;
+}
+
+.turn-notification-banner.your-turn {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #10b981;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.25), inset 0 0 10px rgba(16, 185, 129, 0.1);
+  animation: pulse-your-turn 2s infinite alternate;
+}
+
+.turn-notification-banner.opponent-turn {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #ef4444;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.2), inset 0 0 10px rgba(239, 68, 68, 0.05);
+  animation: pulse-opponent-turn 2s infinite alternate;
+}
+
+.turn-notification-banner.hidden {
+  opacity: 0;
+  top: 0px;
+  transform: translate(-50%, -20px) scale(0.9);
+}
+
+/* Opponent Turn HUD State */
+.game-hud.opponent-turn-active .hud-bottom {
+  opacity: 0.45;
+  filter: grayscale(40%) blur(0.5px);
+  pointer-events: none !important;
+  transition: all 0.4s ease;
+}
+
+.game-hud.opponent-turn-active .hud-bottom * {
+  pointer-events: none !important;
+}
+
+.game-hud.opponent-turn-active .active-worm-panel {
+  border-left-color: rgba(255, 255, 255, 0.2) !important;
+  opacity: 0.7;
+  transition: all 0.4s ease;
+}
+
+@keyframes pulse-your-turn {
+  0% {
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.2), inset 0 0 8px rgba(16, 185, 129, 0.1);
+  }
+  100% {
+    box-shadow: 0 0 25px rgba(16, 185, 129, 0.4), inset 0 0 12px rgba(16, 185, 129, 0.2);
+  }
+}
+
+@keyframes pulse-opponent-turn {
+  0% {
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.15), inset 0 0 6px rgba(239, 68, 68, 0.05);
+  }
+  100% {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.3), inset 0 0 10px rgba(239, 68, 68, 0.1);
+  }
+}

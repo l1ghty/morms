@@ -235,6 +235,27 @@ export class UIManager {
         container.appendChild(row);
       });
     }
+
+    // 6. Update Turn Banner & dim HUD if it's the opponent's turn in multiplayer
+    const turnBanner = document.getElementById('turn-notification-banner');
+    const hudContainer = document.getElementById('game-hud');
+    if (turnBanner) {
+      if (this.game.isOnline) {
+        turnBanner.classList.remove('hidden');
+        if (this.game.isLocalPlayerTurn) {
+          turnBanner.textContent = 'Your Turn';
+          turnBanner.className = 'turn-notification-banner your-turn';
+          if (hudContainer) hudContainer.classList.remove('opponent-turn-active');
+        } else {
+          turnBanner.textContent = "Opponent's Turn";
+          turnBanner.className = 'turn-notification-banner opponent-turn';
+          if (hudContainer) hudContainer.classList.add('opponent-turn-active');
+        }
+      } else {
+        turnBanner.classList.add('hidden');
+        if (hudContainer) hudContainer.classList.remove('opponent-turn-active');
+      }
+    }
   }
 
   showGameOver(winningTeam) {
