@@ -9,7 +9,7 @@ export class MultiplayerManager {
   }
 
   connect() {
-    const wsUrl = `ws://${window.location.hostname}:8080`;
+    const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`;
     this.socket = new WebSocket(wsUrl);
 
     this.socket.onopen = () => {

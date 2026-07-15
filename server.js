@@ -1,8 +1,74 @@
 import { WebSocketServer } from 'ws';
 import { ServerGame } from './src/server/server_game.js';
+import http from 'http';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const wss = new WebSocketServer({ port: 8080 });
-console.log('WebSocket server is running on port 8080');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const DIST_DIR = path.join(__dirname, 'dist');
+
+const isProd = process.env.NODE_ENV === 'production';
+const PORT = process.env.PORT || (isProd ? 3000 : 8080);
+
+const MIME_TYPES = {
+  '.html': 'text/html',
+  '.css': 'text/css',
+  '.js': 'application/javascript',
+  '.json': 'application/json',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon',
+};
+
+const server = http.createServer((req, res) => {
+  // Strip query parameters or hashes
+  let safeUrl = req.url.split('?')[0].split('#')[0];
+  safeUrl = safeUrl === '/' ? 'index.html' : safeUrl;
+  
+  const filePath = path.join(DIST_DIR, safeUrl);
+  
+  if (!filePath.startsWith(DIST_DIR)) {
+    res.writeHead(403, { 'Content-Type': 'text/plain' });
+    res.end('Forbidden');
+    return;
+  }
+
+  const ext = path.extname(filePath);
+  const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+
+  fs.readFile(filePath, (err, content) => {
+    if (err) {
+      if (err.code === 'ENOENT') {
+        fs.readFile(path.join(DIST_DIR, 'index.html'), (err2, indexContent) => {
+          if (err2) {
+            res.writeHead(404, { 'Content-Type': 'text/plain' });
+            res.end('Not Found');
+          } else {
+            res.writeHead(200, { 'Content-Type': 'text/html' });
+            res.end(indexContent, 'utf-8');
+          }
+        });
+      } else {
+        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.end(`Server Error: ${err.code}`);
+      }
+    } else {
+      res.writeHead(200, { 'Content-Type': contentType });
+      res.end(content, 'utf-8');
+    }
+  });
+});
+
+const wss = new WebSocketServer({ server });
+console.log('WebSocket server is initialized');
+
+server.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT} (Mode: ${isProd ? 'Production' : 'Development'})`);
+});
 
 const rooms = {};
 const lobbyClients = new Set();
