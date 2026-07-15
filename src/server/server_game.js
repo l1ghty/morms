@@ -287,7 +287,11 @@ export class ServerGame {
     }
     
     this.projectiles.push(proj);
-    this.startRetreat(RETREAT_DURATION_LONG);
+    if (weaponId === 'super_sheep') {
+      this.state = 'ACTION';
+    } else {
+      this.startRetreat(RETREAT_DURATION_LONG);
+    }
   }
 
   update(dt) {
@@ -337,6 +341,17 @@ export class ServerGame {
       p.update(dt);
       if (p.isDead) {
         this.projectiles.splice(i, 1);
+      }
+    }
+
+    if (this.state === 'ACTION') {
+      const team = this.teams[this.activeTeamIndex];
+      const weaponId = ['bazooka', 'grenade', 'cluster', 'holy', 'dynamite', 'airstrike', 'blowtorch', 'banana', 'baseball_bat', 'super_sheep'][this.selectedWeaponIndex];
+      if (weaponId === 'super_sheep') {
+        const hasSuperSheep = this.projectiles.some(p => p.type === 'super_sheep');
+        if (!hasSuperSheep) {
+          this.startRetreat(RETREAT_DURATION_SHORT);
+        }
       }
     }
     

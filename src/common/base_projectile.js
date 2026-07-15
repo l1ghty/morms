@@ -43,17 +43,44 @@ export class BaseProjectile {
       return;
     }
 
-    // Gravity
-    this.vy += this.game.gravity * dt;
+    if (this.type === 'super_sheep') {
+      // Super sheep flight steering
+      let goLeft = false;
+      let goRight = false;
+      if (this.game.activePlayerKeys) {
+        // Server-side
+        goLeft = this.game.activePlayerKeys.ArrowLeft;
+        goRight = this.game.activePlayerKeys.ArrowRight;
+      } else if (this.game.keys) {
+        // Client-side
+        goLeft = this.game.keys['ArrowLeft'] || this.game.keys['KeyA'] || this.game.keys['a'] || this.game.keys['A'];
+        goRight = this.game.keys['ArrowRight'] || this.game.keys['KeyD'] || this.game.keys['d'] || this.game.keys['D'];
+      }
 
-    // Wind
-    if (this.affectedByWind && this.game.wind) {
-      this.vx += this.game.wind.x * 0.04 * dt;
+      let angle = Math.atan2(this.vy, this.vx);
+      const turnSpeed = 0.05 * dt; // radians per frame
+      if (goLeft) angle -= turnSpeed;
+      if (goRight) angle += turnSpeed;
+
+      if (!this.sheepSpeed) {
+        this.sheepSpeed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+        this.sheepSpeed = Math.max(5.5, Math.min(9.0, this.sheepSpeed));
+      }
+      this.vx = Math.cos(angle) * this.sheepSpeed;
+      this.vy = Math.sin(angle) * this.sheepSpeed;
+    } else {
+      // Gravity
+      this.vy += this.game.gravity * dt;
+
+      // Wind
+      if (this.affectedByWind && this.game.wind) {
+        this.vx += this.game.wind.x * 0.04 * dt;
+      }
+
+      // Drag
+      this.vx *= Math.pow(0.992, dt);
+      this.vy *= Math.pow(0.992, dt);
     }
-
-    // Drag
-    this.vx *= Math.pow(0.992, dt);
-    this.vy *= Math.pow(0.992, dt);
 
     // Integrate position
     this.x += this.vx * dt;
@@ -71,6 +98,15 @@ export class BaseProjectile {
         this.playAudio('hallelujah');
       }
 
+      if (this.fuse <= 0) {
+        this.explode();
+        return;
+      }
+    } else if (this.type === 'super_sheep') {
+      if (this.fuse === undefined) {
+        this.fuse = 20.0; // 20 seconds maximum flying time
+      }
+      this.fuse -= dt / 60;
       if (this.fuse <= 0) {
         this.explode();
         return;

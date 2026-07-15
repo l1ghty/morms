@@ -720,7 +720,7 @@ export class Game {
       this.projectiles.push(proj);
       this.camera.target = proj;
       this.deductAmmo(weapon);
-      this.startRetreat(RETREAT_DURATION_LONG);
+      this.state = GameState.ACTION;
     }
     else if (weapon.id === 'baseball_bat') {
       this.audio.play('shoot_bazooka');
@@ -871,12 +871,30 @@ export class Game {
     if (this.isOnline) {
       this.projectiles.forEach(p => {
         // Run client-side physics simulation for smooth prediction
-        p.vy += this.gravity * dt;
-        if (p.affectedByWind && this.wind) {
-          p.vx += this.wind.x * 0.04 * dt;
+        if (p.type === 'super_sheep') {
+          if (this.isLocalPlayerTurn) {
+            let goLeft = this.keys['ArrowLeft'] || this.keys['KeyA'] || this.keys['a'] || this.keys['A'];
+            let goRight = this.keys['ArrowRight'] || this.keys['KeyD'] || this.keys['d'] || this.keys['D'];
+            let angle = Math.atan2(p.vy, p.vx);
+            const turnSpeed = 0.05 * dt;
+            if (goLeft) angle -= turnSpeed;
+            if (goRight) angle += turnSpeed;
+            
+            if (!p.sheepSpeed) {
+              p.sheepSpeed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+              p.sheepSpeed = Math.max(5.5, Math.min(9.0, p.sheepSpeed));
+            }
+            p.vx = Math.cos(angle) * p.sheepSpeed;
+            p.vy = Math.sin(angle) * p.sheepSpeed;
+          }
+        } else {
+          p.vy += this.gravity * dt;
+          if (p.affectedByWind && this.wind) {
+            p.vx += this.wind.x * 0.04 * dt;
+          }
+          p.vx *= Math.pow(0.992, dt);
+          p.vy *= Math.pow(0.992, dt);
         }
-        p.vx *= Math.pow(0.992, dt);
-        p.vy *= Math.pow(0.992, dt);
 
         p.x += p.vx * dt;
         p.y += p.vy * dt;
@@ -934,7 +952,9 @@ export class Game {
         if (w.x > this.width - w.halfW) w.x = this.width - w.halfW;
       });
 
-      if (this.isLocalPlayerTurn && (this.state === GameState.PLAYING || this.state === GameState.RETREAT)) {
+      const activeWeapon = this.WEAPONS[this.selectedWeaponIndex];
+      const isSuperSheepFlying = this.state === GameState.ACTION && activeWeapon && activeWeapon.id === 'super_sheep';
+      if (this.isLocalPlayerTurn && (this.state === GameState.PLAYING || this.state === GameState.RETREAT || isSuperSheepFlying)) {
         this.mp.send({
           type: 'input',
           keys: {
@@ -1015,6 +1035,16 @@ export class Game {
       
       if (this.state === GameState.PLAYING || this.state === GameState.RETREAT) {
         this.handlePlayingInput(dt);
+      }
+
+      if (this.state === GameState.ACTION) {
+        const weapon = this.WEAPONS[this.selectedWeaponIndex];
+        if (weapon && weapon.id === 'super_sheep') {
+          const hasSuperSheep = this.projectiles.some(p => p.type === 'super_sheep');
+          if (!hasSuperSheep) {
+            this.startRetreat(RETREAT_DURATION_SHORT);
+          }
+        }
       }
       
       if (this.state === GameState.FIRING) {
