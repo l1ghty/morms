@@ -9,7 +9,7 @@ if (process.env.NODE_ENV === 'production') {
   console.log('\x1b[36m%s\x1b[0m', 'Starting unified server in production mode...');
   await import('./server.js');
 } else {
-  console.log('\x1b[36m%s\x1b[0m', 'Starting Worms Web Game development environment...');
+  console.log('\x1b[36m%s\x1b[0m', 'Starting Morms Web Game development environment...');
 
   // Start the WebSocket server in dev mode (port 8080)
   console.log('\x1b[35m%s\x1b[0m', 'Starting WebSocket server (port 8080)...');

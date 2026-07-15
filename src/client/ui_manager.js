@@ -136,7 +136,7 @@ export class UIManager {
       item.innerHTML = `
         <div style="text-align: left;">
           <span style="font-weight: 600; color: #fff; font-size: 0.95rem;">${room.name}</span>
-          <span style="display: block; font-size: 0.8rem; color: rgba(255,255,255,0.5);">${room.mapType.toUpperCase()} • ${room.wormsPerTeam} Worms</span>
+          <span style="display: block; font-size: 0.8rem; color: rgba(255,255,255,0.5);">${room.mapType.toUpperCase()} • ${room.wormsPerTeam} Morms</span>
         </div>
         <button class="btn btn-primary join-room-btn" data-room-id="${room.id}" style="padding: 6px 14px; font-size: 0.85rem; border-radius: 4px;">Join</button>
       `;

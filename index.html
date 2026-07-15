@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Worms 2D: Tactical Annihilation</title>
+  <title>Morms 2D: Tactical Annihilation</title>
   <meta name="description"
     content="A pixel-perfect turn-based artillery game with deformable terrain, realistic wind, gravity physics, and a rich arsenal of weapons. Built using HTML5 Canvas and Vanilla JavaScript.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -30,7 +30,7 @@
           <div class="hud-panel active-worm-panel">
             <h2 id="active-team-name">Red Team</h2>
             <div class="worm-meta">
-              <span id="active-worm-name">Wormy</span>
+              <span id="active-worm-name">Mormy</span>
               <div class="worm-health-bar-container">
                 <div id="active-worm-health-bar" class="worm-health-bar"></div>
               </div>
@@ -110,17 +110,17 @@
       <!-- Start/Lobby Screen -->
       <div id="start-screen" class="screen-overlay">
         <div class="menu-card glass-panel">
-          <h1>WORMS 2D<br><span class="subtitle">Tactical Annihilation</span></h1>
+          <h1>MORMS 2D<br><span class="subtitle">Tactical Annihilation</span></h1>
 
           <div class="menu-section">
             <h3>Game Options</h3>
             <div class="options-grid">
               <div class="option-item">
-                <label for="worm-count-select">Worms per Team</label>
+                <label for="worm-count-select">Morms per Team</label>
                 <select id="worm-count-select">
-                  <option value="2">2 Worms</option>
-                  <option value="3" selected>3 Worms</option>
-                  <option value="4">4 Worms</option>
+                  <option value="2">2 Morms</option>
+                  <option value="3" selected>3 Morms</option>
+                  <option value="4">4 Morms</option>
                 </select>
               </div>
               <div class="option-item">
@@ -133,7 +133,7 @@
               </div>
               <div class="option-item" style="grid-column: span 2;">
                 <label for="player-name-input">Your Team Name</label>
-                <input type="text" id="player-name-input" value="Wormy Command"
+                <input type="text" id="player-name-input" value="Mormy Command"
                   style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-primary); border-radius: 8px; padding: 8px 12px; font-size: 0.9rem; font-family: var(--font-ui); outline: none;">
               </div>
               <div class="option-item" style="grid-column: span 2;">
@@ -151,7 +151,7 @@
           <div class="menu-section controls-hint">
             <h3>Controls</h3>
             <ul>
-              <li><strong>A / D (or Left / Right Arrow)</strong>: Move Worm</li>
+              <li><strong>A / D (or Left / Right Arrow)</strong>: Move Morm</li>
               <li><strong>W / S (or Up / Down Arrow)</strong>: Aim Weapon</li>
               <li><strong>Shift + Arrow</strong>: Quick Jump / Backflip</li>
               <li><strong>Spacebar (Hold & Release)</strong>: Fire Weapon (Charge power)</li>
@@ -183,7 +183,7 @@
           <p id="handover-subtitle" class="subtitle">Get ready, Red Team!</p>
           <div style="margin: 24px 0;">
             <div id="handover-avatar" class="handover-avatar">👥</div>
-            <span id="handover-worm-name" class="highlight-text" style="font-size: 1.25rem;">Wormy is up next</span>
+            <span id="handover-worm-name" class="highlight-text" style="font-size: 1.25rem;">Mormy is up next</span>
           </div>
           <button id="handover-start-btn" class="btn btn-primary">Start Turn</button>
         </div>
@@ -208,7 +208,7 @@
               </div>
               <div class="stat-box">
                 <span class="stat-val" id="stat-drowns">2</span>
-                <span class="stat-label">Worms Drowned</span>
+                <span class="stat-label">Morms Drowned</span>
               </div>
             </div>
           </div>
@@ -255,19 +255,19 @@
               <div class="lobby-settings-panel" style="display: flex; gap: 10px; margin-bottom: 8px;">
                 <div class="option-item" style="max-width: 130px;">
                   <label for="lobby-worm-count-select"
-                    style="font-size: 0.75rem; color: rgba(255,255,255,0.7); margin-bottom: 2px;">Worms / Team</label>
+                    style="font-size: 0.75rem; color: rgba(255,255,255,0.7); margin-bottom: 2px;">Morms / Team</label>
                   <select id="lobby-worm-count-select"
-                    style="padding: 4px 8px; font-size: 0.8rem; background: rgba(15,23,42,0.9); border-radius: 6px; border: 1px solid rgba(255,255,255,0.15); color: #fff; outline: none; cursor: pointer;">
-                    <option value="2">2 Worms</option>
-                    <option value="3" selected>3 Worms</option>
-                    <option value="4">4 Worms</option>
+                    style="padding: 4px 8px; font-size: 0.8rem; background: rgba(15, 23, 42, 0.9); border-radius: 6px; border: 1px solid rgba(255,255,255,0.15); color: #fff; outline: none; cursor: pointer;">
+                    <option value="2">2 Morms</option>
+                    <option value="3" selected>3 Morms</option>
+                    <option value="4">4 Morms</option>
                   </select>
                 </div>
                 <div class="option-item" style="max-width: 150px;">
                   <label for="lobby-map-type-select"
                     style="font-size: 0.75rem; color: rgba(255,255,255,0.7); margin-bottom: 2px;">Terrain Type</label>
                   <select id="lobby-map-type-select"
-                    style="padding: 4px 8px; font-size: 0.8rem; background: rgba(15,23,42,0.9); border-radius: 6px; border: 1px solid rgba(255,255,255,0.15); color: #fff; outline: none; cursor: pointer;">
+                    style="padding: 4px 8px; font-size: 0.8rem; background: rgba(15, 23, 42, 0.9); border-radius: 6px; border: 1px solid rgba(255,255,255,0.15); color: #fff; outline: none; cursor: pointer;">
                     <option value="island" selected>Procedural Island</option>
                     <option value="cave">Procedural Cave</option>
                     <option value="canyon">Procedural Canyon</option>
@@ -284,7 +284,7 @@
               style="display: flex; flex-direction: column; gap: 12px; align-items: center; width: 100%;">
               <div class="lobby-settings-display"
                 style="font-size: 0.85rem; color: rgba(255,255,255,0.8); background: rgba(0,0,0,0.15); border-radius: 6px; padding: 6px 16px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 8px; font-family: var(--font-ui);">
-                Worms: <span id="guest-worms-display" style="font-weight: bold; color: var(--text-accent);">3</span> |
+                Morms: <span id="guest-worms-display" style="font-weight: bold; color: var(--text-accent);">3</span> |
                 Terrain: <span id="guest-terrain-display"
                   style="font-weight: bold; color: var(--text-accent);">Island</span>
               </div>
