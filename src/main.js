@@ -242,7 +242,41 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Fullscreen Button toggle
+  const btnFullscreen = document.getElementById('btn-fullscreen');
+  if (btnFullscreen) {
+    const toggleFullscreen = () => {
+      const container = document.getElementById('game-container');
+      if (!container) return;
+      
+      if (!document.fullscreenElement) {
+        container.requestFullscreen().catch(err => {
+          console.error(`Error attempting to enable fullscreen: ${err.message}`);
+        });
+      } else {
+        document.exitFullscreen();
+      }
+    };
+    
+    btnFullscreen.addEventListener('click', toggleFullscreen);
+    btnFullscreen.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleFullscreen();
+    }, { passive: false });
+    
+    // Also update UI state on fullscreen change (in case of Esc key press)
+    document.addEventListener('fullscreenchange', () => {
+      if (document.fullscreenElement) {
+        document.body.classList.add('fullscreen-active');
+      } else {
+        document.body.classList.remove('fullscreen-active');
+      }
+    });
+  }
+
   // Handle Resize
+
   function resizeCanvas() {
     if (game) {
       game.resize(window.innerWidth, window.innerHeight);

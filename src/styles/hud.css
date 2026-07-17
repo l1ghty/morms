@@ -18,6 +18,7 @@
   justify-content: space-between;
   align-items: flex-start;
   width: 100%;
+  padding-right: 60px; /* Make room for the fullscreen button in the top-right corner */
 }
 
 .hud-panel {
@@ -640,4 +641,57 @@ body.touch-controls-active .hud-top > *:last-child {
     font-size: 0.7rem;
   }
 }
+
+/* --- Fullscreen Toggle Button --- */
+.btn-fullscreen {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--panel-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--panel-border);
+  box-shadow: 0 4px 15px var(--panel-glow);
+  color: var(--text-primary);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  z-index: 200;
+  transition: transform 0.15s ease, background-color 0.2s ease, border-color 0.2s ease;
+  pointer-events: auto;
+  padding: 0;
+}
+
+.btn-fullscreen svg {
+  width: 20px;
+  height: 20px;
+  transition: transform 0.15s ease;
+  stroke: var(--text-primary);
+}
+
+.btn-fullscreen:hover {
+  transform: scale(1.08);
+  background: rgba(20, 30, 50, 0.85);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-fullscreen:active {
+  transform: scale(0.95);
+}
+
+/* Fullscreen state icon toggling */
+body.fullscreen-active .btn-fullscreen .icon-enter {
+  display: none !important;
+}
+
+body.fullscreen-active .btn-fullscreen .icon-exit {
+  display: block !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
 
