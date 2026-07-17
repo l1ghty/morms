@@ -7,7 +7,19 @@ export class InputManager {
     this.camStart = { x: 0, y: 0 };
     this.isDragging = false;
     this.dragButton = null;
+    
+    // Mobile Touch interaction state
+    this.touchStart = { x: 0, y: 0 };
+    this.isTouchDragging = false;
+    this.touchSingleTap = false;
+    this.touchStartDist = 0;
+    this.touchStartZoom = 1.0;
+    this.touchStartCenter = { x: 0, y: 0 };
+    this.touchControlsActive = false;
+    
     this.setupInputs();
+    this.setupTouchControls();
+    this.setupVirtualControls();
   }
 
   setupInputs() {
@@ -263,4 +275,306 @@ export class InputManager {
       }
     }, { passive: false });
   }
+
+  // --- Mobile Touch Gestures ---
+  setupTouchControls() {
+    this.game.canvas.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        this.touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        this.camStart = { x: this.game.camera.x, y: this.game.camera.y };
+        this.isTouchDragging = true;
+        this.touchSingleTap = true;
+      } else if (e.touches.length === 2) {
+        this.isTouchDragging = false;
+        this.touchSingleTap = false;
+        
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        this.touchStartDist = Math.hypot(dx, dy);
+        this.touchStartZoom = this.game.camera.zoom;
+        this.touchStartCenter = {
+          x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+          y: (e.touches[0].clientY + e.touches[1].clientY) / 2
+        };
+      }
+    }, { passive: true });
+
+    this.game.canvas.addEventListener('touchmove', (e) => {
+      if (e.touches.length === 1 && this.isTouchDragging) {
+        const dx = e.touches[0].clientX - this.touchStart.x;
+        const dy = e.touches[0].clientY - this.touchStart.y;
+        
+        // Exceed a threshold to be considered a drag instead of a tap
+        if (Math.hypot(dx, dy) > 8) {
+          this.touchSingleTap = false;
+          
+          this.game.camera.manual = true;
+          this.game.camera.x = this.camStart.x - dx / this.game.camera.zoom;
+          this.game.camera.y = this.camStart.y - dy / this.game.camera.zoom;
+          
+          // Keep viewport bounds
+          this.game.camera.x = Math.max(0, Math.min(this.game.camera.x, this.game.width - this.game.canvas.width / this.game.camera.zoom));
+          this.game.camera.y = Math.max(0, Math.min(this.game.camera.y, this.game.height - this.game.canvas.height / this.game.camera.zoom));
+          
+          if (this.game.canvas.width / this.game.camera.zoom > this.game.width) {
+            this.game.camera.x = (this.game.width - this.game.canvas.width / this.game.camera.zoom) / 2;
+          }
+          if (this.game.canvas.height / this.game.camera.zoom > this.game.height) {
+            this.game.camera.y = (this.game.height - this.game.canvas.height / this.game.camera.zoom) / 2;
+          }
+        }
+      } else if (e.touches.length === 2 && this.touchStartDist > 0) {
+        e.preventDefault(); // Stop mobile browser zoom
+        
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const dist = Math.hypot(dx, dy);
+        
+        if (dist > 5) {
+          let zoomNew = this.touchStartZoom * (dist / this.touchStartDist);
+          zoomNew = Math.max(0.4, Math.min(2.5, zoomNew));
+          
+          const zoomOld = this.game.camera.zoom;
+          if (zoomNew !== zoomOld) {
+            const rect = this.game.canvas.getBoundingClientRect();
+            const scaleX = this.game.canvas.width / rect.width;
+            const scaleY = this.game.canvas.height / rect.height;
+            const mouseX = (this.touchStartCenter.x - rect.left) * scaleX;
+            const mouseY = (this.touchStartCenter.y - rect.top) * scaleY;
+            
+            this.game.camera.x += mouseX * (1 / zoomOld - 1 / zoomNew);
+            this.game.camera.y += mouseY * (1 / zoomOld - 1 / zoomNew);
+            this.game.camera.zoom = zoomNew;
+            this.game.camera.manual = true;
+            
+            this.game.camera.x = Math.max(0, Math.min(this.game.camera.x, this.game.width - this.game.canvas.width / zoomNew));
+            this.game.camera.y = Math.max(0, Math.min(this.game.camera.y, this.game.height - this.game.canvas.height / zoomNew));
+            
+            if (this.game.canvas.width / zoomNew > this.game.width) {
+              this.game.camera.x = (this.game.width - this.game.canvas.width / zoomNew) / 2;
+            }
+            if (this.game.canvas.height / zoomNew > this.game.height) {
+              this.game.camera.y = (this.game.height - this.game.canvas.height / zoomNew) / 2;
+            }
+          }
+        }
+      }
+    }, { passive: false });
+
+    this.game.canvas.addEventListener('touchend', (e) => {
+      if (this.touchSingleTap && this.isTouchDragging) {
+        // Compute click coordinates
+        const rect = this.game.canvas.getBoundingClientRect();
+        const scaleX = this.game.canvas.width / rect.width;
+        const scaleY = this.game.canvas.height / rect.height;
+        const clientX = e.changedTouches[0].clientX;
+        const clientY = e.changedTouches[0].clientY;
+        const mouseX = (clientX - rect.left) * scaleX;
+        const mouseY = (clientY - rect.top) * scaleY;
+        
+        this.game.mouse.x = mouseX;
+        this.game.mouse.y = mouseY;
+        this.game.mouse.canvasX = (mouseX / this.game.camera.zoom) + this.game.camera.x;
+        this.game.mouse.canvasY = (mouseY / this.game.camera.zoom) + this.game.camera.y;
+        
+        this.game.handleMouseClick();
+      }
+      
+      this.isTouchDragging = false;
+      this.touchStartDist = 0;
+    }, { passive: true });
+
+    // Enable touch controls automatically on the first touch gesture anywhere
+    window.addEventListener('touchstart', () => {
+      const toggleSelect = document.getElementById('mobile-controls-toggle');
+      if (toggleSelect && toggleSelect.value === 'auto' && !this.touchControlsActive) {
+        this.touchControlsActive = true;
+        document.body.classList.add('touch-controls-active');
+        this.game.updateHUD();
+      }
+    }, { once: true, passive: true });
+  }
+
+  // --- Mobile Virtual Buttons ---
+  setupVirtualControls() {
+    // Helper to map virtual element events to game key inputs
+    const bindVirtualKey = (elementId, keyCode) => {
+      const el = document.getElementById(elementId);
+      if (!el) return;
+      
+      const press = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (this.game.isOnline && !this.game.isLocalPlayerTurn) return;
+        this.game.keys[keyCode] = true;
+        this.game.camera.manual = false;
+      };
+      
+      const release = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.game.keys[keyCode] = false;
+      };
+      
+      el.addEventListener('touchstart', press, { passive: false });
+      el.addEventListener('touchend', release, { passive: false });
+      el.addEventListener('touchcancel', release, { passive: false });
+      
+      // PC debugging support
+      el.addEventListener('mousedown', press);
+      el.addEventListener('mouseup', release);
+      el.addEventListener('mouseleave', release);
+    };
+
+    bindVirtualKey('btn-dpad-left', 'ArrowLeft');
+    bindVirtualKey('btn-dpad-right', 'ArrowRight');
+    bindVirtualKey('btn-dpad-up', 'ArrowUp');
+    bindVirtualKey('btn-dpad-down', 'ArrowDown');
+
+    // Jump / Backflip bindings
+    const bindJump = (elementId, isBackflip) => {
+      const el = document.getElementById(elementId);
+      if (!el) return;
+      
+      const triggerJump = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (this.game.state !== GameState.PLAYING && this.game.state !== GameState.RETREAT) return;
+        if (this.game.isOnline && !this.game.isLocalPlayerTurn) return;
+        
+        this.game.activeWorm.jump(isBackflip);
+        if (this.game.isOnline) {
+          this.game.mp.send({ type: 'jump', isBackflip });
+        }
+      };
+      
+      el.addEventListener('touchstart', triggerJump, { passive: false });
+      el.addEventListener('mousedown', triggerJump);
+    };
+    
+    bindJump('btn-mobile-jump', false);
+    bindJump('btn-mobile-backflip', true);
+
+    // Fire button bindings (with holding/charging logic)
+    const fireBtn = document.getElementById('btn-mobile-fire');
+    if (fireBtn) {
+      const pressFire = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (this.game.isOnline && !this.game.isLocalPlayerTurn) return;
+        
+        const weapon = this.game.WEAPONS[this.game.selectedWeaponIndex];
+        
+        // Detonate Super Sheep if flying
+        if (this.game.state === GameState.ACTION && weapon && weapon.id === 'super_sheep') {
+          this.game.detonateSheep();
+          return;
+        }
+        
+        if (this.game.state !== GameState.PLAYING) return;
+        if (weapon.id === 'airstrike') return; // Targeted on canvas click
+        
+        this.game.keys['Space'] = true;
+        this.game.state = GameState.FIRING;
+        this.game.isCharging = true;
+        this.game.chargePower = 0;
+        if (this.game.isOnline) {
+          this.game.mp.send({ type: 'start_charge' });
+        }
+      };
+      
+      const releaseFire = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!this.game.keys['Space']) return;
+        
+        this.game.keys['Space'] = false;
+        if (this.game.state === GameState.FIRING && this.game.isCharging) {
+          if (this.game.isOnline && !this.game.isLocalPlayerTurn) return;
+          this.game.fireActiveWeapon();
+        }
+      };
+      
+      fireBtn.addEventListener('touchstart', pressFire, { passive: false });
+      fireBtn.addEventListener('touchend', releaseFire, { passive: false });
+      fireBtn.addEventListener('touchcancel', releaseFire, { passive: false });
+      
+      fireBtn.addEventListener('mousedown', pressFire);
+      fireBtn.addEventListener('mouseup', releaseFire);
+      fireBtn.addEventListener('mouseleave', releaseFire);
+    }
+
+    // Weapon drawer button
+    const weaponBtn = document.getElementById('btn-mobile-weapon');
+    if (weaponBtn) {
+      const toggleWep = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.game.toggleWeaponMenu();
+      };
+      weaponBtn.addEventListener('touchstart', toggleWep, { passive: false });
+      weaponBtn.addEventListener('mousedown', toggleWep);
+    }
+
+    // Fuse duration cycling
+    const fuseBtn = document.getElementById('btn-mobile-fuse');
+    if (fuseBtn) {
+      const cycleFuse = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (this.game.state !== GameState.PLAYING) return;
+        if (this.game.isOnline && !this.game.isLocalPlayerTurn) return;
+        
+        const activeW = this.game.WEAPONS[this.game.selectedWeaponIndex];
+        if (['grenade', 'cluster', 'holy'].includes(activeW.id)) {
+          let nextFuse = (this.game.selectedFuseTime % 5) + 1;
+          this.game.selectedFuseTime = nextFuse;
+          this.game.audio.play('beep_tick');
+          
+          const timerDisplay = document.getElementById('weapon-timer-display');
+          if (timerDisplay) {
+            timerDisplay.textContent = `${this.game.selectedFuseTime}s Fuse`;
+          }
+          
+          fuseBtn.textContent = `⏱️ ${nextFuse}s`;
+          
+          if (this.game.isOnline) {
+            this.game.mp.send({ type: 'set_fuse', fuse: this.game.selectedFuseTime });
+          }
+        }
+      };
+      fuseBtn.addEventListener('touchstart', cycleFuse, { passive: false });
+      fuseBtn.addEventListener('mousedown', cycleFuse);
+    }
+  }
+
+  updateTouchControlsState() {
+    const toggleSelect = document.getElementById('mobile-controls-toggle');
+    const setting = toggleSelect ? toggleSelect.value : 'auto';
+    
+    let active = false;
+    if (setting === 'on') {
+      active = true;
+    } else if (setting === 'off') {
+      active = false;
+    } else {
+      // Auto detect touch layout
+      const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+      const isSmall = window.innerWidth <= 1024;
+      active = isTouch && isSmall;
+    }
+    
+    this.touchControlsActive = active;
+    
+    if (active) {
+      document.body.classList.add('touch-controls-active');
+    } else {
+      document.body.classList.remove('touch-controls-active');
+      // Release virtual key holds
+      ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space'].forEach(k => {
+        this.game.keys[k] = false;
+      });
+    }
+  }
 }
+

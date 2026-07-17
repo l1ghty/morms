@@ -256,6 +256,32 @@ export class UIManager {
         if (hudContainer) hudContainer.classList.remove('opponent-turn-active');
       }
     }
+
+    // 7. Update Mobile Virtual Controls overlay visibility
+    const mobileControls = document.getElementById('mobile-controls');
+    if (mobileControls) {
+      const isMobileActive = this.game.input && this.game.input.touchControlsActive;
+      const isPlayState = [GameState.PLAYING, GameState.FIRING, GameState.RETREAT, GameState.ACTION].includes(this.game.state);
+      const isMyTurn = this.game.isLocalPlayerTurn;
+      
+      if (isMobileActive && isPlayState && isMyTurn) {
+        mobileControls.classList.remove('hidden');
+        
+        // Show/hide fuse duration button depending on active weapon capability
+        const activeW = this.game.WEAPONS[this.game.selectedWeaponIndex];
+        const mobileFuseBtn = document.getElementById('btn-mobile-fuse');
+        if (mobileFuseBtn) {
+          if (activeW && ['grenade', 'cluster', 'holy'].includes(activeW.id)) {
+            mobileFuseBtn.classList.remove('hidden');
+            mobileFuseBtn.textContent = `⏱️ ${this.game.selectedFuseTime}s`;
+          } else {
+            mobileFuseBtn.classList.add('hidden');
+          }
+        }
+      } else {
+        mobileControls.classList.add('hidden');
+      }
+    }
   }
 
   showGameOver(winningTeam) {

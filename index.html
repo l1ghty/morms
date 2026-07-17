@@ -108,7 +108,29 @@
             </div>
           </div>
         </div>
+
+        <!-- Mobile Controls (Touch Screens) -->
+        <div id="mobile-controls" class="mobile-controls hidden">
+          <!-- Left D-Pad -->
+          <div class="dpad-container glass-panel">
+            <button class="dpad-btn dpad-up" id="btn-dpad-up">▲</button>
+            <button class="dpad-btn dpad-left" id="btn-dpad-left">◀</button>
+            <button class="dpad-btn dpad-right" id="btn-dpad-right">▶</button>
+            <button class="dpad-btn dpad-down" id="btn-dpad-down">▼</button>
+            <div class="dpad-center"></div>
+          </div>
+          
+          <!-- Right Action Controls -->
+          <div class="mobile-actions-container">
+            <button class="action-btn btn-mobile-secondary btn-mobile-fuse hidden" id="btn-mobile-fuse">⏱️ 3s</button>
+            <button class="action-btn btn-mobile-secondary btn-mobile-weapon" id="btn-mobile-weapon">🎒</button>
+            <button class="action-btn btn-mobile-secondary btn-mobile-backflip" id="btn-mobile-backflip">↩️</button>
+            <button class="action-btn btn-mobile-secondary btn-mobile-jump" id="btn-mobile-jump">↗️</button>
+            <button class="action-btn btn-mobile-fire" id="btn-mobile-fire">FIRE</button>
+          </div>
+        </div>
       </div>
+
 
       <!-- Start/Lobby Screen -->
       <div id="start-screen" class="screen-overlay">
@@ -139,6 +161,15 @@
                 <input type="text" id="player-name-input" value="Mormy Command"
                   style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-primary); border-radius: 8px; padding: 8px 12px; font-size: 0.9rem; font-family: var(--font-ui); outline: none;">
               </div>
+              <div class="option-item" style="grid-column: span 2;">
+                <label for="mobile-controls-toggle">Touch Controls</label>
+                <select id="mobile-controls-toggle" style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-primary); border-radius: 8px; padding: 8px 12px; font-size: 0.9rem; font-family: var(--font-ui); outline: none; cursor: pointer; width: 100%;">
+                  <option value="auto" selected>Auto Detect</option>
+                  <option value="on">Always On</option>
+                  <option value="off">Always Off</option>
+                </select>
+              </div>
+
               <div class="option-item" style="grid-column: span 2;">
                 <label>Start Game Mode</label>
                 <div class="mode-buttons-group">

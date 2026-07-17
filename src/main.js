@@ -91,6 +91,18 @@ document.addEventListener('DOMContentLoaded', () => {
   if (lobbyWormCount) lobbyWormCount.addEventListener('change', sendLobbySettingsUpdate);
   if (lobbyMapType) lobbyMapType.addEventListener('change', sendLobbySettingsUpdate);
 
+  // Hook up Touch Controls toggle settings change
+  const touchControlsToggle = document.getElementById('mobile-controls-toggle');
+  if (touchControlsToggle) {
+    touchControlsToggle.addEventListener('change', () => {
+      if (game && game.input) {
+        game.input.updateTouchControlsState();
+        game.updateHUD();
+      }
+    });
+  }
+
+
   // Hook up Disconnect Return Button
   const disconnectBackBtn = document.getElementById('disconnect-back-btn');
   if (disconnectBackBtn) {
@@ -234,8 +246,12 @@ document.addEventListener('DOMContentLoaded', () => {
   function resizeCanvas() {
     if (game) {
       game.resize(window.innerWidth, window.innerHeight);
+      if (game.input) {
+        game.input.updateTouchControlsState();
+      }
     }
   }
+
 
   window.addEventListener('resize', resizeCanvas);
   resizeCanvas();
