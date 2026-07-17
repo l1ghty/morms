@@ -282,6 +282,20 @@ export class UIManager {
         mobileControls.classList.add('hidden');
       }
     }
+
+
+    // 8. Update Portrait Orientation Warning overlay visibility (only in-game)
+    const warning = document.getElementById('orientation-warning');
+    if (warning) {
+      const isLobby = this.game.state === GameState.LOBBY;
+      const isPortrait = window.innerHeight > window.innerWidth;
+      
+      if (!isLobby && isPortrait) {
+        warning.classList.remove('hidden');
+      } else {
+        warning.classList.add('hidden');
+      }
+    }
   }
 
   showGameOver(winningTeam) {
