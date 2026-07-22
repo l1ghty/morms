@@ -11,7 +11,6 @@ export class ServerTerrain {
     x = Math.round(x);
     y = Math.round(y);
     if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
-      if (y >= 820) return true; // Water boundary acts as solid boundary check
       return false;
     }
     return this.collisionMask[y * this.width + x] === 1;

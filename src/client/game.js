@@ -964,9 +964,6 @@ export class Game {
             w.y += dy * 0.3 * dt;
           }
         }
-        
-        if (w.x < w.halfW) w.x = w.halfW;
-        if (w.x > this.width - w.halfW) w.x = this.width - w.halfW;
       });
 
       const activeWeapon = this.WEAPONS[this.selectedWeaponIndex];
@@ -1276,17 +1273,20 @@ export class Game {
   drawWater() {
     const time = performance.now() * 0.002;
     this.ctx.fillStyle = 'rgba(14, 116, 144, 0.8)';
-    this.ctx.beginPath();
-    this.ctx.moveTo(this.camera.x, this.waterLevel);
-    
     const visibleWidth = this.canvas.width / this.camera.zoom;
-    for (let x = this.camera.x; x <= this.camera.x + visibleWidth; x += 20) {
+    const startX = this.camera.x - 600;
+    const endX = this.camera.x + visibleWidth + 600;
+
+    this.ctx.beginPath();
+    this.ctx.moveTo(startX, this.waterLevel);
+    
+    for (let x = startX; x <= endX; x += 20) {
       const waveHeight = Math.sin(x * 0.015 + time) * 6 + Math.cos(x * 0.03 - time) * 3;
       this.ctx.lineTo(x, this.waterLevel + waveHeight);
     }
     
-    this.ctx.lineTo(this.camera.x + visibleWidth, this.height);
-    this.ctx.lineTo(this.camera.x, this.height);
+    this.ctx.lineTo(endX, this.height + 200);
+    this.ctx.lineTo(startX, this.height + 200);
     this.ctx.closePath();
     this.ctx.fill();
   }

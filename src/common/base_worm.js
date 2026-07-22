@@ -92,15 +92,6 @@ export class BaseWorm {
       this.y += this.vy * dt;
     }
 
-    // Horizontal map bounds
-    if (this.x < this.halfW) {
-      this.x  = this.halfW;
-      this.vx = 0;
-    } else if (this.x > this.game.width - this.halfW) {
-      this.x  = this.game.width - this.halfW;
-      this.vx = 0;
-    }
-
     this.resolveTerrainCollision(dt);
   }
 
