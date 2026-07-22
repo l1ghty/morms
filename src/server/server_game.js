@@ -99,6 +99,7 @@ export class ServerGame {
     
     const team = this.teams[this.activeTeamIndex];
     this.selectedWeaponIndex = team.selectedWeaponIndex; // Sync active weapon index for new team
+    this.handoverTimer = 0;
     this.state = 'HANDOVER';
     this.turnTimer = 'Ready';
     this.activePlayerKeys = {
@@ -111,6 +112,7 @@ export class ServerGame {
 
   startTurn(windStrength = null) {
     if (this.state !== 'HANDOVER') return;
+    this.handoverTimer = 0;
     this.state = 'PLAYING';
     this.turnTimer = TURN_DURATION;
     
@@ -402,6 +404,16 @@ export class ServerGame {
       }
     }
     
+    if (this.state === 'HANDOVER') {
+      this.handoverTimer = (this.handoverTimer || 0) + dt;
+      if (this.handoverTimer >= 75) {
+        this.handoverTimer = 0;
+        this.startTurn();
+      }
+    } else {
+      this.handoverTimer = 0;
+    }
+
     if (this.state === 'CLEANUP') {
       const unsettledProjectiles = this.projectiles.length;
       const unsettledWorms = this.worms.filter(w => !w.isSettled());

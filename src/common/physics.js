@@ -43,11 +43,10 @@ export function resolveWormCollision(worm, terrain, endActiveTurnCallback, damag
         }
       }
       worm.vy = 0;
-      if (Math.abs(worm.vx) > 0.3) {
-        worm.vx *= 0.80; // Smooth ground sliding friction
-      } else {
+      worm.isFalling = false;
+      worm.vx *= 0.75;
+      if (Math.abs(worm.vx) < 0.05) {
         worm.vx = 0;
-        worm.isFalling = false;
       }
       
       let pushUpCount = 0;
