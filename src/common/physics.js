@@ -22,6 +22,13 @@ export function resolveWormCollision(worm, terrain, endActiveTurnCallback, damag
   }
   
   if (isInside) {
+    if (worm.rope && worm.rope.attached) {
+      worm.y -= 1.5;
+      if (worm.vy > 0) worm.vy = 0;
+      worm.vx *= 0.96;
+      return;
+    }
+
     if (worm.vy >= 0) {
       if (worm.isFalling && worm.vy > 7.0) {
         const rawDmg = Math.round((worm.vy - 7.0) * 6);

@@ -147,13 +147,29 @@ export class BaseWorm {
 
   swingRope(dir, dt) {
     if (this.rope && this.rope.attached) {
-      this.vx += dir * 0.55 * dt;
+      const dx = this.x - this.rope.x;
+      const dy = this.y - this.rope.y;
+      const dist = Math.hypot(dx, dy);
+
+      if (dist > 0) {
+        let tx = -dy / dist;
+        let ty =  dx / dist;
+
+        if (dir > 0 && tx < 0) { tx = -tx; ty = -ty; }
+        if (dir < 0 && tx > 0) { tx = -tx; ty = -ty; }
+
+        const swingAccel = 1.65 * dt;
+        this.vx += tx * swingAccel;
+        this.vy += ty * swingAccel;
+      } else {
+        this.vx += dir * 1.5 * dt;
+      }
     }
   }
 
   adjustRopeLength(dir, dt) {
     if (this.rope && this.rope.attached) {
-      this.rope.length = Math.max(25, Math.min(550, this.rope.length + dir * 6.5 * dt));
+      this.rope.length = Math.max(20, Math.min(650, this.rope.length + dir * 11.0 * dt));
     }
   }
 
