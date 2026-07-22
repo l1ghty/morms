@@ -313,16 +313,28 @@ export class ServerGame {
     livingWormsCount[this.teams[1].name] = 0;
     if (this.activeWorm && this.activeWorm.health > 0) {
       if (this.state === 'PLAYING' || this.state === 'RETREAT') {
-        let dir = 0;
-        if (this.activePlayerKeys.ArrowLeft) dir = -1;
-        else if (this.activePlayerKeys.ArrowRight) dir = 1;
-        this.activeWorm.move(dir, dt);
-        
-        if (this.state === 'PLAYING') {
-          let aimDir = 0;
-          if (this.activePlayerKeys.ArrowUp) aimDir = -1;
-          else if (this.activePlayerKeys.ArrowDown) aimDir = 1;
-          this.activeWorm.aim(aimDir, dt);
+        if (this.activeWorm.rope && this.activeWorm.rope.attached) {
+          let swingDir = 0;
+          if (this.activePlayerKeys.ArrowLeft) swingDir = -1;
+          else if (this.activePlayerKeys.ArrowRight) swingDir = 1;
+          if (swingDir !== 0) this.activeWorm.swingRope(swingDir, dt);
+
+          let lenDir = 0;
+          if (this.activePlayerKeys.ArrowUp) lenDir = -1;
+          else if (this.activePlayerKeys.ArrowDown) lenDir = 1;
+          if (lenDir !== 0) this.activeWorm.adjustRopeLength(lenDir, dt);
+        } else {
+          let dir = 0;
+          if (this.activePlayerKeys.ArrowLeft) dir = -1;
+          else if (this.activePlayerKeys.ArrowRight) dir = 1;
+          this.activeWorm.move(dir, dt);
+          
+          if (this.state === 'PLAYING') {
+            let aimDir = 0;
+            if (this.activePlayerKeys.ArrowUp) aimDir = -1;
+            else if (this.activePlayerKeys.ArrowDown) aimDir = 1;
+            this.activeWorm.aim(aimDir, dt);
+          }
         }
       }
 
@@ -461,7 +473,7 @@ export class ServerGame {
           this.chargePower = 0;
         }
 
-        if (data.type === 'fire' && data.weaponId === 'airstrike') {
+        if (data.type === 'fire') {
           this.fireActiveWeapon(data.vx, data.vy, data.spawnX, data.spawnY, data.weaponId);
         }
       }

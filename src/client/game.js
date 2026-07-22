@@ -357,6 +357,7 @@ export class Game {
         worm.aimAngle = syncW.aimAngle;
         worm.isFalling = syncW.isFalling;
         worm.health = syncW.health;
+        worm.rope = syncW.rope ? { attached: syncW.rope.attached, x: syncW.rope.x, y: syncW.rope.y, length: syncW.rope.length } : null;
 
         if (prevHealth > worm.health) {
           const dmg = prevHealth - worm.health;
@@ -390,12 +391,14 @@ export class Game {
         proj.id = pId;
         proj.targetX = syncP.x;
         proj.targetY = syncP.y;
+        if (syncP.fuse !== undefined) proj.fuse = syncP.fuse;
         this.projectiles.push(proj);
       } else {
         proj.targetX = syncP.x;
         proj.targetY = syncP.y;
         proj.vx = syncP.vx;
         proj.vy = syncP.vy;
+        if (syncP.fuse !== undefined) proj.fuse = syncP.fuse;
       }
     });
 
@@ -935,6 +938,10 @@ export class Game {
           }
         }
         
+        if (!p.contactFuse && p.fuse > 0) {
+          p.fuse -= dt / 60;
+        }
+
         if (p.y >= this.waterLevel) {
           this.particles.spawnBurst(p.x, this.waterLevel, 'water', 8);
         }
@@ -969,6 +976,7 @@ export class Game {
       const activeWeapon = this.WEAPONS[this.selectedWeaponIndex];
       const isSuperSheepFlying = this.state === GameState.ACTION && activeWeapon && activeWeapon.id === 'super_sheep';
       if (this.isLocalPlayerTurn && (this.state === GameState.PLAYING || this.state === GameState.RETREAT || isSuperSheepFlying)) {
+        this.handlePlayingInput(dt);
         this.mp.send({
           type: 'input',
           keys: {

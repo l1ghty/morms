@@ -288,7 +288,8 @@ wss.on('connection', (ws) => {
                   health: w.health,
                   facingDir: w.facingDir,
                   aimAngle: w.aimAngle,
-                  isFalling: w.isFalling
+                  isFalling: w.isFalling,
+                  rope: w.rope && w.rope.attached ? { attached: true, x: w.rope.x, y: w.rope.y, length: w.rope.length } : null
                 })),
                 projectiles: room.game.projectiles.map(p => ({
                   id: p.id,
@@ -296,7 +297,8 @@ wss.on('connection', (ws) => {
                   x: p.x,
                   y: p.y,
                   vx: p.vx,
-                  vy: p.vy
+                  vy: p.vy,
+                  fuse: p.fuse
                 }))
               });
               
