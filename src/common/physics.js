@@ -1,4 +1,17 @@
 export function resolveWormCollision(worm, terrain, endActiveTurnCallback, damageCallback) {
+  // 1. Horizontal wall collision check while moving/flying fast
+  if (Math.abs(worm.vx) > 0.5) {
+    const checkDir = worm.vx > 0 ? 1 : -1;
+    const sideX = worm.x + checkDir * (worm.halfW + 1);
+    if (terrain.isSolid(sideX, worm.y - 6) || 
+        terrain.isSolid(sideX, worm.y) || 
+        terrain.isSolid(sideX, worm.y + 4)) {
+      worm.vx = -worm.vx * 0.35;
+      worm.x -= checkDir * 2;
+    }
+  }
+
+  // 2. Ground collision check at feet
   const feetY = worm.y + worm.halfH;
   let isInside = false;
   for (let ox = -worm.halfW + 2; ox <= worm.halfW - 2; ox += 2) {
@@ -10,8 +23,10 @@ export function resolveWormCollision(worm, terrain, endActiveTurnCallback, damag
   
   if (isInside) {
     if (worm.vy >= 0) {
-      if (worm.isFalling && worm.vy > 6.5) {
-        const dmg = Math.round((worm.vy - 6.5) * 16);
+      if (worm.isFalling && worm.vy > 7.0) {
+        const rawDmg = Math.round((worm.vy - 7.0) * 6);
+        const maxFallDmg = 25; // Maximum 25% of max health per fall
+        const dmg = Math.min(maxFallDmg, Math.max(0, rawDmg));
         if (dmg > 0) {
           damageCallback(dmg);
           if (worm.game && worm.game.activeWorm === worm && 
@@ -21,8 +36,12 @@ export function resolveWormCollision(worm, terrain, endActiveTurnCallback, damag
         }
       }
       worm.vy = 0;
-      worm.vx = 0;
-      worm.isFalling = false;
+      if (Math.abs(worm.vx) > 0.3) {
+        worm.vx *= 0.80; // Smooth ground sliding friction
+      } else {
+        worm.vx = 0;
+        worm.isFalling = false;
+      }
       
       let pushUpCount = 0;
       const maxPushUp = 20;
@@ -289,21 +308,30 @@ export function calculateExplosionImpact(ex, ey, radius, maxDamage, knockbackFor
     if (worm.health <= 0) return;
     
     const dx = worm.x - ex;
-    const dy = (worm.y - 2) - ey;
+    const dy = (worm.y - 4) - ey; // Center of worm body
     const dist = Math.sqrt(dx * dx + dy * dy);
-    const effectRadius = radius + 15;
+    const effectRadius = radius + 20; // Generous impact radius
     
     if (dist < effectRadius) {
       const proximity = (effectRadius - dist) / effectRadius;
-      const damage = Math.round(maxDamage * proximity);
+      const damage = Math.round(maxDamage * Math.pow(proximity, 1.1));
       if (damage > 0) {
         onWormDamage(worm, damage);
       }
       
       const angle = dist === 0 ? -Math.PI / 2 : Math.atan2(dy, dx);
-      const lift = -1.2 * proximity;
-      const horizontalPush = Math.cos(angle) * knockbackForce * proximity;
-      const verticalPush = Math.sin(angle) * knockbackForce * proximity + lift;
+      const forceScale = knockbackForce * 1.35 * Math.pow(proximity, 0.8);
+      
+      let horizontalPush = Math.cos(angle) * forceScale;
+      let verticalPush = Math.sin(angle) * forceScale;
+      
+      // Guaranteed upward launch component so explosions near/below ground launch worms into high arcs
+      const upwardLift = -Math.max(3.5, knockbackForce * 0.55) * Math.pow(proximity, 0.7);
+      verticalPush = Math.min(verticalPush, 0) + upwardLift;
+      
+      if (Math.abs(horizontalPush) < 0.5 && dist > 0) {
+        horizontalPush = (dx >= 0 ? 1 : -1) * 2.0 * proximity;
+      }
       
       onLaunchWorm(worm, horizontalPush, verticalPush);
     }
