@@ -37,6 +37,7 @@ export class BaseWorm {
     this.aimAngle  = -Math.PI / 6;
     this.isFalling = true;
     this.walkSpeed = 3.5;
+    this.rope      = null; // { attached: true, x: number, y: number, length: number }
   }
 
   // ─── Physics Update ─────────────────────────────────────────────────────────
@@ -46,20 +47,50 @@ export class BaseWorm {
 
     // Drowning
     if (this.y + this.halfH >= this.game.waterLevel) {
+      if (this.rope) this.detachRope();
       this.drown();
       return;
     }
 
-    // Gravity + drag
-    if (this.isFalling) {
+    // Rope mechanics update
+    if (this.rope && this.rope.attached) {
+      this.isFalling = true;
       this.vy += this.game.gravity * dt;
-      this.vx *= Math.pow(0.98, dt);
-    } else {
-      this.vx *= Math.pow(0.92, dt);
-    }
+      this.vx *= Math.pow(0.992, dt);
+      this.vy *= Math.pow(0.992, dt);
 
-    this.x += this.vx * dt;
-    this.y += this.vy * dt;
+      this.x += this.vx * dt;
+      this.y += this.vy * dt;
+
+      // Enforce rope distance constraint
+      const dx = this.x - this.rope.x;
+      const dy = this.y - this.rope.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist > this.rope.length && dist > 0) {
+        const nx = dx / dist;
+        const ny = dy / dist;
+        this.x = this.rope.x + nx * this.rope.length;
+        this.y = this.rope.y + ny * this.rope.length;
+
+        const vRadial = this.vx * nx + this.vy * ny;
+        if (vRadial > 0) {
+          this.vx -= vRadial * nx;
+          this.vy -= vRadial * ny;
+        }
+      }
+    } else {
+      // Gravity + drag
+      if (this.isFalling) {
+        this.vy += this.game.gravity * dt;
+        this.vx *= Math.pow(0.98, dt);
+      } else {
+        this.vx *= Math.pow(0.92, dt);
+      }
+
+      this.x += this.vx * dt;
+      this.y += this.vy * dt;
+    }
 
     // Horizontal map bounds
     if (this.x < this.halfW) {
@@ -71,6 +102,68 @@ export class BaseWorm {
     }
 
     this.resolveTerrainCollision(dt);
+  }
+
+  fireRope() {
+    if (this.rope && this.rope.attached) {
+      this.detachRope();
+      return true;
+    }
+
+    const aimX = Math.cos(this.aimAngle) * this.facingDir;
+    const aimY = Math.sin(this.aimAngle);
+    const maxRange = 480;
+    const step = 4;
+    let hitX = null;
+    let hitY = null;
+
+    for (let d = 10; d <= maxRange; d += step) {
+      const checkX = this.x + aimX * d;
+      const checkY = this.y + aimY * d;
+      if (checkX < 0 || checkX > this.game.width || checkY < 0 || checkY > this.game.waterLevel) {
+        break;
+      }
+      if (this.game.terrain.isSolid(checkX, checkY)) {
+        hitX = checkX;
+        hitY = checkY;
+        break;
+      }
+    }
+
+    if (hitX !== null && hitY !== null) {
+      const ropeLength = Math.hypot(this.x - hitX, this.y - hitY);
+      this.rope = {
+        attached: true,
+        x: hitX,
+        y: hitY,
+        length: Math.max(25, ropeLength)
+      };
+      this.isFalling = true;
+      this.playAudio('rope_attach');
+      return true;
+    } else {
+      this.playAudio('beep_error');
+      return false;
+    }
+  }
+
+  detachRope() {
+    if (this.rope) {
+      this.rope = null;
+      this.playAudio('jump');
+    }
+  }
+
+  swingRope(dir, dt) {
+    if (this.rope && this.rope.attached) {
+      this.vx += dir * 0.55 * dt;
+    }
+  }
+
+  adjustRopeLength(dir, dt) {
+    if (this.rope && this.rope.attached) {
+      this.rope.length = Math.max(25, Math.min(550, this.rope.length + dir * 6.5 * dt));
+    }
   }
 
   resolveTerrainCollision(dt) {
@@ -144,6 +237,7 @@ export class BaseWorm {
 
   isSettled() {
     if (this.health <= 0) return true;
+    if (this.rope && this.rope.attached) return false;
     return !this.isFalling && Math.abs(this.vx) < 0.05 && Math.abs(this.vy) < 0.05;
   }
 

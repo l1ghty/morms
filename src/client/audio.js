@@ -76,6 +76,9 @@ export class AudioSynth {
       case 'blowtorch':
         this.playBlowtorch(now);
         break;
+      case 'rope_attach':
+        this.playRopeAttach(now);
+        break;
       case 'worm_damage':
         this.playWormDamage(now);
         break;
@@ -445,5 +448,24 @@ export class AudioSynth {
     
     osc.start(time);
     osc.stop(time + 0.41);
+  }
+
+  playRopeAttach(time) {
+    // Sharp metal latch / grapple hook thud sound
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(1200, time);
+    osc.frequency.exponentialRampToValueAtTime(300, time + 0.08);
+
+    gain.gain.setValueAtTime(0.2, time);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.08);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc.start(time);
+    osc.stop(time + 0.09);
   }
 }

@@ -92,16 +92,24 @@ export class InputManager {
       if (this.game.state === GameState.PLAYING || this.game.state === GameState.RETREAT) {
         if (e.code === 'Enter' || e.key === 'Enter') {
           if (this.game.isOnline && !this.game.isLocalPlayerTurn) return;
-          this.game.activeWorm.jump(false); // Normal jump forwards
-          if (this.game.isOnline) {
-            this.game.mp.send({ type: 'jump', isBackflip: false });
+          if (this.game.activeWorm && this.game.activeWorm.rope && this.game.activeWorm.rope.attached) {
+            this.game.activeWorm.detachRope();
+          } else {
+            this.game.activeWorm.jump(false); // Normal jump forwards
+            if (this.game.isOnline) {
+              this.game.mp.send({ type: 'jump', isBackflip: false });
+            }
           }
         }
         if (e.code === 'Backspace' || e.key === 'Backspace') {
           if (this.game.isOnline && !this.game.isLocalPlayerTurn) return;
-          this.game.activeWorm.jump(true); // Backflip
-          if (this.game.isOnline) {
-            this.game.mp.send({ type: 'jump', isBackflip: true });
+          if (this.game.activeWorm && this.game.activeWorm.rope && this.game.activeWorm.rope.attached) {
+            this.game.activeWorm.detachRope();
+          } else {
+            this.game.activeWorm.jump(true); // Backflip
+            if (this.game.isOnline) {
+              this.game.mp.send({ type: 'jump', isBackflip: true });
+            }
           }
         }
       }
@@ -442,6 +450,11 @@ export class InputManager {
         if (this.game.state !== GameState.PLAYING && this.game.state !== GameState.RETREAT) return;
         if (this.game.isOnline && !this.game.isLocalPlayerTurn) return;
         
+        if (this.game.activeWorm && this.game.activeWorm.rope && this.game.activeWorm.rope.attached) {
+          this.game.activeWorm.detachRope();
+          return;
+        }
+
         this.game.activeWorm.jump(isBackflip);
         if (this.game.isOnline) {
           this.game.mp.send({ type: 'jump', isBackflip });
@@ -474,6 +487,11 @@ export class InputManager {
         if (this.game.state !== GameState.PLAYING) return;
         if (weapon.id === 'airstrike') return; // Targeted on canvas click
         
+        if (weapon.id === 'ninja_rope') {
+          this.game.fireActiveWeapon();
+          return;
+        }
+
         this.game.keys['Space'] = true;
         this.game.state = GameState.FIRING;
         this.game.isCharging = true;

@@ -197,14 +197,26 @@ export class ServerGame {
     
     if (clientWeaponId) {
       weaponId = clientWeaponId;
-      const idx = ['bazooka', 'grenade', 'cluster', 'holy', 'dynamite', 'airstrike', 'blowtorch', 'banana', 'baseball_bat', 'super_sheep'].indexOf(weaponId);
+      const idx = ['bazooka', 'grenade', 'cluster', 'holy', 'dynamite', 'airstrike', 'blowtorch', 'banana', 'baseball_bat', 'super_sheep', 'ninja_rope'].indexOf(weaponId);
       if (idx !== -1) {
         team.selectedWeaponIndex = idx;
         this.selectedWeaponIndex = idx;
       }
     } else {
       this.selectedWeaponIndex = team.selectedWeaponIndex;
-      weaponId = ['bazooka', 'grenade', 'cluster', 'holy', 'dynamite', 'airstrike', 'blowtorch', 'banana', 'baseball_bat', 'super_sheep'][this.selectedWeaponIndex];
+      weaponId = ['bazooka', 'grenade', 'cluster', 'holy', 'dynamite', 'airstrike', 'blowtorch', 'banana', 'baseball_bat', 'super_sheep', 'ninja_rope'][this.selectedWeaponIndex];
+    }
+    
+    if (weaponId === 'ninja_rope') {
+      if (this.activeWorm && this.activeWorm.health > 0) {
+        if (this.activeWorm.rope && this.activeWorm.rope.attached) {
+          this.activeWorm.detachRope();
+        } else {
+          this.activeWorm.fireRope();
+        }
+      }
+      this.state = 'PLAYING';
+      return;
     }
     
     if (weaponId === 'blowtorch') {
@@ -354,7 +366,7 @@ export class ServerGame {
 
     if (this.state === 'ACTION') {
       const team = this.teams[this.activeTeamIndex];
-      const weaponId = ['bazooka', 'grenade', 'cluster', 'holy', 'dynamite', 'airstrike', 'blowtorch', 'banana', 'baseball_bat', 'super_sheep'][this.selectedWeaponIndex];
+      const weaponId = ['bazooka', 'grenade', 'cluster', 'holy', 'dynamite', 'airstrike', 'blowtorch', 'banana', 'baseball_bat', 'super_sheep', 'ninja_rope'][this.selectedWeaponIndex];
       if (weaponId === 'super_sheep') {
         const hasSuperSheep = this.projectiles.some(p => p.type === 'super_sheep');
         if (!hasSuperSheep) {

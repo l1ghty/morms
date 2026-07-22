@@ -57,6 +57,7 @@ export const WEAPONS = [
   { id: 'blowtorch', name: 'Blowtorch',     ammo:  2, icon: '🔥', desc: 'Digs tunnel in terrain. High utility.' },
   { id: 'banana',    name: 'Banana Bomb',   ammo:  2, icon: '🍌', desc: 'Wildly bouncy banana. Explodes into 5 bouncing bananas!' },
   { id: 'baseball_bat', name: 'Baseball Bat', ammo: 2, icon: '🏏', desc: 'Whack a nearby worm to launch them into orbit!' },
-  { id: 'super_sheep', name: 'Super Sheep',  ammo:  2, icon: '🐑', desc: 'Controllable/manual detonation flying sheep!' }
+  { id: 'super_sheep', name: 'Super Sheep',  ammo:  2, icon: '🐑', desc: 'Controllable/manual detonation flying sheep!' },
+  { id: 'ninja_rope',  name: 'Ninja Rope',   ammo: -1, icon: '🪢', desc: 'Hook onto terrain! Aim with Up/Down, Space/Click to shoot rope. Swing A/D, change length W/S, Jump or Space to release.' }
 ];
 

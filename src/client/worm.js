@@ -47,6 +47,27 @@ export class Worm extends BaseWorm {
 
     ctx.save();
 
+    // Render active Ninja Rope
+    if (this.rope && this.rope.attached) {
+      ctx.strokeStyle = '#d97706';
+      ctx.lineWidth = 2.5;
+      ctx.setLineDash([6, 3]);
+      ctx.beginPath();
+      ctx.moveTo(this.x, this.y - 2);
+      ctx.lineTo(this.rope.x, this.rope.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Grapple Hook anchor point
+      ctx.fillStyle = '#475569';
+      ctx.beginPath();
+      ctx.arc(this.rope.x, this.rope.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+    }
+
     // Worm body (pink capsule)
     ctx.fillStyle = '#ff8fa3';
     ctx.lineWidth = 1;
@@ -231,6 +252,18 @@ export class Worm extends BaseWorm {
       ctx.fillStyle = 'rgba(56, 189, 248, 0.7)';
       ctx.beginPath();
       ctx.moveTo(9, -1); ctx.lineTo(13, 0); ctx.lineTo(9, 1);
+      ctx.closePath();
+      ctx.fill();
+    } else if (weaponId === 'ninja_rope') {
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(0, -2, 10, 4);
+      ctx.fillStyle = '#d97706';
+      ctx.beginPath();
+      ctx.arc(2, 3, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#94a3b8';
+      ctx.beginPath();
+      ctx.moveTo(10, -3); ctx.lineTo(13, 0); ctx.lineTo(10, 3);
       ctx.closePath();
       ctx.fill();
     }

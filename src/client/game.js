@@ -678,6 +678,13 @@ export class Game {
         this.audio.play('fuse');
       } else if (weapon.id === 'blowtorch') {
         this.audio.play('blowtorch');
+      } else if (weapon.id === 'ninja_rope') {
+        if (worm.rope && worm.rope.attached) {
+          worm.detachRope();
+        } else {
+          worm.fireRope();
+        }
+        this.state = GameState.PLAYING;
       }
       this.deductAmmo(weapon);
       this.chargePower = 0;
@@ -803,6 +810,14 @@ export class Game {
       }, 80);
       
       this.deductAmmo(weapon);
+    }
+    else if (weapon.id === 'ninja_rope') {
+      if (worm.rope && worm.rope.attached) {
+        worm.detachRope();
+      } else {
+        worm.fireRope();
+      }
+      this.state = GameState.PLAYING;
     }
     
     this.chargePower = 0;
@@ -972,10 +987,21 @@ export class Game {
         const weapon = this.WEAPONS[this.selectedWeaponIndex];
         const pressFire = this.keys['Space'] || this.keys[' '] || this.keys['Spacebar'];
         if (pressFire && weapon.id !== 'airstrike') {
-          this.state = GameState.FIRING;
-          this.isCharging = true;
-          this.chargePower = 0;
-          this.mp.send({ type: 'start_charge' });
+          if (weapon.id === 'ninja_rope') {
+            if (!this.ropeKeyDebounce) {
+              this.ropeKeyDebounce = true;
+              this.fireActiveWeapon();
+              setTimeout(() => { this.ropeKeyDebounce = false; }, 200);
+            }
+          } else {
+            if (this.activeWorm && this.activeWorm.rope && this.activeWorm.rope.attached) {
+              this.activeWorm.detachRope();
+            }
+            this.state = GameState.FIRING;
+            this.isCharging = true;
+            this.chargePower = 0;
+            this.mp.send({ type: 'start_charge' });
+          }
         }
       }
 
@@ -1098,29 +1124,56 @@ export class Game {
       this.camera.manual = false;
     }
     
-    if (goLeft) {
-      worm.move(-1, dt);
-    } else if (goRight) {
-      worm.move(1, dt);
+    if (worm.rope && worm.rope.attached) {
+      if (goLeft) {
+        worm.swingRope(-1, dt);
+      } else if (goRight) {
+        worm.swingRope(1, dt);
+      }
+      
+      if (aimUp) {
+        worm.adjustRopeLength(-1, dt);
+      } else if (aimDown) {
+        worm.adjustRopeLength(1, dt);
+      }
     } else {
-      worm.move(0, dt);
+      if (goLeft) {
+        worm.move(-1, dt);
+      } else if (goRight) {
+        worm.move(1, dt);
+      } else {
+        worm.move(0, dt);
+      }
+      
+      if (this.state === GameState.PLAYING) {
+        if (aimUp) {
+          worm.aim(-1, dt);
+        } else if (aimDown) {
+          worm.aim(1, dt);
+        }
+      }
     }
     
     if (this.state === GameState.PLAYING) {
-      if (aimUp) {
-        worm.aim(-1, dt);
-      } else if (aimDown) {
-        worm.aim(1, dt);
-      }
-      
       const weapon = this.WEAPONS[this.selectedWeaponIndex];
       const pressFire = this.keys['Space'] || this.keys[' '] || this.keys['Spacebar'];
       if (pressFire && weapon.id !== 'airstrike') {
-        this.state = GameState.FIRING;
-        this.isCharging = true;
-        this.chargePower = 0;
-        if (this.isOnline && this.isLocalPlayerTurn) {
-          this.mp.send({ type: 'start_charge' });
+        if (weapon.id === 'ninja_rope') {
+          if (!this.ropeKeyDebounce) {
+            this.ropeKeyDebounce = true;
+            this.fireActiveWeapon();
+            setTimeout(() => { this.ropeKeyDebounce = false; }, 250);
+          }
+        } else {
+          if (worm.rope && worm.rope.attached) {
+            worm.detachRope();
+          }
+          this.state = GameState.FIRING;
+          this.isCharging = true;
+          this.chargePower = 0;
+          if (this.isOnline && this.isLocalPlayerTurn) {
+            this.mp.send({ type: 'start_charge' });
+          }
         }
       }
     }
@@ -1262,6 +1315,40 @@ export class Game {
       this.ctx.moveTo(this.mouse.canvasX, this.mouse.canvasY - 25);
       this.ctx.lineTo(this.mouse.canvasX, this.waterLevel || this.mouse.canvasY + 25); // safe fallback boundary limit
       this.ctx.stroke();
+    } else if (weapon.id === 'ninja_rope' && this.activeWorm && (!this.activeWorm.rope || !this.activeWorm.rope.attached)) {
+      const worm = this.activeWorm;
+      const aimX = Math.cos(worm.aimAngle) * worm.facingDir;
+      const aimY = Math.sin(worm.aimAngle);
+      const maxRange = 480;
+      const step = 4;
+      let hitX = worm.x + aimX * maxRange;
+      let hitY = worm.y + aimY * maxRange;
+      let isHit = false;
+
+      for (let d = 10; d <= maxRange; d += step) {
+        const cx = worm.x + aimX * d;
+        const cy = worm.y + aimY * d;
+        if (this.terrain.isSolid(cx, cy)) {
+          hitX = cx;
+          hitY = cy;
+          isHit = true;
+          break;
+        }
+      }
+
+      this.ctx.strokeStyle = isHit ? 'rgba(245, 158, 11, 0.75)' : 'rgba(239, 68, 68, 0.4)';
+      this.ctx.lineWidth = 1.5;
+      this.ctx.setLineDash([4, 4]);
+      this.ctx.beginPath();
+      this.ctx.moveTo(worm.x, worm.y - 2);
+      this.ctx.lineTo(hitX, hitY);
+      this.ctx.stroke();
+      this.ctx.setLineDash([]);
+
+      this.ctx.fillStyle = isHit ? '#f59e0b' : '#ef4444';
+      this.ctx.beginPath();
+      this.ctx.arc(hitX, hitY, isHit ? 4 : 3, 0, Math.PI * 2);
+      this.ctx.fill();
     }
   }
 }
