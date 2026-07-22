@@ -123,7 +123,7 @@ export class BaseProjectile {
       return;
     }
 
-    // Direct worm contact (rockets / missiles)
+    // Direct worm contact (rockets / missiles / banana shrapnel)
     if (this.contactFuse) {
       for (const worm of this.game.worms) {
         if (worm.health > 0) {
@@ -132,6 +132,18 @@ export class BaseProjectile {
           if (dx * dx + dy * dy < 144) { // 12² = 144
             this.explode();
             return;
+          }
+        }
+      }
+    } else if (this.type === 'banana_shrapnel' && !this.hasImpacted) {
+      for (const worm of this.game.worms) {
+        if (worm.health > 0) {
+          const dx = worm.x - this.x;
+          const dy = worm.y - this.y;
+          if (dx * dx + dy * dy < 144) {
+            this.hasImpacted = true;
+            this.fuse = 0.2;
+            break;
           }
         }
       }
@@ -145,16 +157,18 @@ export class BaseProjectile {
     this.doExplode();
 
     if (this.type === 'cluster' || this.type === 'banana') {
-      const shrapType = this.type === 'banana' ? 'banana_shrapnel' : 'cluster_shrapnel';
-      const speedScale = this.type === 'banana' ? 1.8 : 1.4;
-      for (let i = 0; i < 5; i++) {
-        const angle = -Math.PI / 2 + (i - 2) * 0.12 + (Math.random() - 0.5) * 0.08;
-        const speed = (3.5 + Math.random() * 2.5) * speedScale;
+      const isBanana = this.type === 'banana';
+      const shrapType = isBanana ? 'banana_shrapnel' : 'cluster_shrapnel';
+      const count = 5;
+      for (let i = 0; i < count; i++) {
+        const spreadFactor = isBanana ? 0.38 : 0.18;
+        const angle = -Math.PI / 2 + (i - (count - 1) / 2) * spreadFactor + (Math.random() - 0.5) * 0.12;
+        const baseSpeed = isBanana ? (6.5 + Math.random() * 4.0) : (4.0 + Math.random() * 2.5);
         const shrap = this.createShrapnel(
           this.x,
-          this.y - 6,
-          Math.cos(angle) * speed,
-          Math.sin(angle) * speed,
+          this.y - 8,
+          Math.cos(angle) * baseSpeed,
+          Math.sin(angle) * baseSpeed,
           shrapType
         );
         this.game.projectiles.push(shrap);

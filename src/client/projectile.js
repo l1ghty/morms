@@ -63,14 +63,15 @@ export class Projectile extends BaseProjectile {
     } else if (this.type === 'banana' || this.type === 'banana_shrapnel') {
       ctx.save();
       ctx.translate(this.x, this.y);
-      ctx.rotate(Math.atan2(this.vy, this.vx) + Math.PI / 4);
+      const spin = (this.x * 0.05 + performance.now() * 0.008) % (Math.PI * 2);
+      ctx.rotate(spin);
       const r = this.radius;
       ctx.fillStyle = '#facc15';
       ctx.strokeStyle = '#854d0e';
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.arc(0, 0, r, 0.25 * Math.PI, 1.25 * Math.PI, false);
-      ctx.arc(0, 0, r * 0.7, 1.25 * Math.PI, 0.25 * Math.PI, true);
+      ctx.arc(0, 0, r * 0.65, 1.25 * Math.PI, 0.25 * Math.PI, true);
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
@@ -156,6 +157,17 @@ export class Projectile extends BaseProjectile {
       ctx.moveTo(this.x, this.y - 5);
       ctx.quadraticCurveTo(this.x + 3, this.y - 9, this.x + 4, this.y - 8);
       ctx.stroke();
+    }
+
+    // Fuse countdown timer badge above timed weapons
+    if (!this.contactFuse && this.fuse > 0) {
+      const secs = Math.ceil(this.fuse);
+      ctx.font = '800 10px Space Grotesk';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
+      ctx.fillRect(this.x - 8, this.y - this.radius - 17, 16, 12);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillText(`${secs}`, this.x, this.y - this.radius - 7);
     }
 
     ctx.restore();

@@ -72,7 +72,7 @@ export class InputManager {
         if (e.key >= '1' && e.key <= '5') {
           if (this.game.isOnline && !this.game.isLocalPlayerTurn) return;
           const activeW = this.game.WEAPONS[this.game.selectedWeaponIndex];
-          if (['grenade', 'cluster', 'holy'].includes(activeW.id)) {
+          if (['grenade', 'cluster', 'holy', 'banana'].includes(activeW.id)) {
             this.game.selectedFuseTime = parseInt(e.key, 10);
             this.game.audio.play('beep_tick');
             const timerDisplay = document.getElementById('weapon-timer-display');

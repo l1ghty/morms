@@ -219,24 +219,24 @@ export function setupWeaponProperties(type, selectedFuseTime) {
       props.knockbackForce = 7.0;
       break;
     case 'banana':
-      props.radius = 5;
+      props.radius = 6;
       props.affectedByWind = false;
       props.contactFuse = false;
       props.fuse = selectedFuseTime || 3.0;
-      props.elasticity = 0.75;
-      props.blastRadius = 55;
-      props.maxDamage = 60;
-      props.knockbackForce = 9.0;
+      props.elasticity = 0.88;
+      props.blastRadius = 85;
+      props.maxDamage = 75;
+      props.knockbackForce = 12.0;
       break;
     case 'banana_shrapnel':
-      props.radius = 3.5;
+      props.radius = 4;
       props.affectedByWind = false;
       props.contactFuse = false;
-      props.fuse = 1.0 + Math.random() * 1.2;
-      props.elasticity = 0.65;
-      props.blastRadius = 32;
-      props.maxDamage = 35;
-      props.knockbackForce = 6.0;
+      props.fuse = 1.5 + Math.random() * 2.0;
+      props.elasticity = 0.84;
+      props.blastRadius = 60;
+      props.maxDamage = 45;
+      props.knockbackForce = 9.5;
       break;
     case 'super_sheep':
       props.radius = 6;
@@ -292,6 +292,10 @@ export function handleTerrainBounce(proj, terrain, onBounceAudioCallback) {
       proj.x += normal.x * 0.8;
       proj.y += normal.y * 0.8;
       limit++;
+    }
+    if (proj.type === 'banana_shrapnel' && !proj.hasImpacted) {
+      proj.hasImpacted = true;
+      proj.fuse = 0.35 + Math.random() * 0.3;
     }
   }
   

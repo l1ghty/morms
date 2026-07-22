@@ -55,7 +55,7 @@ export class UIManager {
     
     const timerDisplay = document.getElementById('weapon-timer-display');
     if (timerDisplay) {
-      if (['grenade', 'cluster', 'holy'].includes(activeW.id)) {
+      if (['grenade', 'cluster', 'holy', 'banana'].includes(activeW.id)) {
         timerDisplay.classList.remove('hidden');
         timerDisplay.textContent = `${this.game.selectedFuseTime}s Fuse`;
       } else {
