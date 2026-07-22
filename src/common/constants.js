@@ -15,8 +15,9 @@ export const DEFAULT_FUSE_TIME = 3;       // grenade / cluster fuse (seconds)
 
 // ─── Charging ──────────────────────────────────────────────────────────────────
 export const MAX_CHARGE = 100;
-export const CHARGE_RATE_CLIENT = 2.5;    // charge units per frame (client)
-export const CHARGE_RATE_SERVER = 1.8;    // charge units per frame (server)
+export const CHARGE_RATE = 2.5;           // charge units per frame
+export const CHARGE_RATE_CLIENT = CHARGE_RATE;
+export const CHARGE_RATE_SERVER = CHARGE_RATE;
 
 // ─── Camera ────────────────────────────────────────────────────────────────────
 export const CAMERA_LERP_SPEED = 0.05;

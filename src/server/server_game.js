@@ -191,6 +191,7 @@ export class ServerGame {
   }
 
   fireActiveWeapon(vx, vy, spawnX, spawnY, clientWeaponId = null) {
+    this.chargePower = 0;
     const team = this.teams[this.activeTeamIndex];
     let weaponId;
     
@@ -310,6 +311,13 @@ export class ServerGame {
           if (this.activePlayerKeys.ArrowUp) aimDir = -1;
           else if (this.activePlayerKeys.ArrowDown) aimDir = 1;
           this.activeWorm.aim(aimDir, dt);
+        }
+      }
+
+      if (this.state === 'FIRING') {
+        this.chargePower += this.chargeRate * dt;
+        if (this.chargePower >= this.maxCharge) {
+          this.chargePower = this.maxCharge;
         }
       }
     }

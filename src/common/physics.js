@@ -147,7 +147,7 @@ export function setupWeaponProperties(type, selectedFuseTime) {
       props.contactFuse = false;
       props.fuse = selectedFuseTime || 3.0;
       props.elasticity = 0.55;
-      props.blastRadius = 48;
+      props.blastRadius = 70;
       props.maxDamage = 55;
       props.knockbackForce = 8.0;
       break;
@@ -187,7 +187,7 @@ export function setupWeaponProperties(type, selectedFuseTime) {
       props.contactFuse = false;
       props.fuse = 5.0;
       props.elasticity = 0.15;
-      props.blastRadius = 75;
+      props.blastRadius = 110;
       props.maxDamage = 85;
       props.knockbackForce = 12.0;
       break;
@@ -224,7 +224,7 @@ export function setupWeaponProperties(type, selectedFuseTime) {
       props.affectedByWind = false;
       props.contactFuse = true;
       props.elasticity = 0.5;
-      props.blastRadius = 60;
+      props.blastRadius = 90;
       props.maxDamage = 75;
       props.knockbackForce = 11.0;
       break;

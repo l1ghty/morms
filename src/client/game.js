@@ -4,7 +4,7 @@ import { Projectile } from './projectile.js';
 import { ParticleSystem } from './particles.js';
 import { AudioSynth } from './audio.js';
 import { MultiplayerManager } from './multiplayer.js';
-import { GameState, WEAPONS, MAP_WIDTH, MAP_HEIGHT, WATER_LEVEL, GRAVITY, TURN_DURATION, RETREAT_DURATION_SHORT, RETREAT_DURATION_LONG, DEFAULT_FUSE_TIME, MAX_CHARGE, CHARGE_RATE_CLIENT, CAMERA_LERP_SPEED, TEAM_RED, TEAM_BLUE, WORM_NAMES_RED, WORM_NAMES_BLUE, DEFAULT_SETTINGS } from '../common/constants.js';
+import { GameState, WEAPONS, MAP_WIDTH, MAP_HEIGHT, WATER_LEVEL, GRAVITY, TURN_DURATION, RETREAT_DURATION_SHORT, RETREAT_DURATION_LONG, DEFAULT_FUSE_TIME, MAX_CHARGE, CHARGE_RATE, CAMERA_LERP_SPEED, TEAM_RED, TEAM_BLUE, WORM_NAMES_RED, WORM_NAMES_BLUE, DEFAULT_SETTINGS } from '../common/constants.js';
 import { UIManager } from './ui_manager.js';
 import { InputManager } from './input_manager.js';
 import { getSafeSpawnPoint, getActiveTeamWorm, rotateActiveWorm, getRandomWindStrength } from '../common/physics.js';
@@ -61,7 +61,7 @@ export class Game {
     this.chargePower = 0;
     this.isCharging = false;
     this.maxCharge = MAX_CHARGE;
-    this.chargeRate = CHARGE_RATE_CLIENT;
+    this.chargeRate = CHARGE_RATE;
     
     this.selectedWeaponIndex = 0;
     this.totalDamageDealt = 0;
@@ -298,7 +298,9 @@ export class Game {
     this.turnTimer = data.turnTimer;
     this.wind.strength = data.windStrength;
     this.wind.x = data.windStrength;
-    this.chargePower = data.chargePower;
+    if (!(this.isLocalPlayerTurn && (this.state === GameState.FIRING || data.state === GameState.FIRING))) {
+      this.chargePower = data.chargePower;
+    }
     this.selectedFuseTime = data.selectedFuseTime;
 
     if (data.activeWormId === null) {
