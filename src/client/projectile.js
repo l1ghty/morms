@@ -159,8 +159,8 @@ export class Projectile extends BaseProjectile {
       ctx.stroke();
     }
 
-    // Fuse countdown timer badge above timed weapons
-    if (!this.contactFuse && this.fuse > 0) {
+    // Fuse countdown timer badge above timed weapons & super_sheep
+    if ((!this.contactFuse || this.type === 'super_sheep') && this.fuse > 0) {
       const secs = Math.ceil(this.fuse);
       ctx.font = '800 10px Space Grotesk';
       ctx.textAlign = 'center';

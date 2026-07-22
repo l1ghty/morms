@@ -104,10 +104,11 @@ export class BaseProjectile {
       }
     } else if (this.type === 'super_sheep') {
       if (this.fuse === undefined) {
-        this.fuse = 20.0; // 20 seconds maximum flying time
+        this.fuse = 12.0;
       }
       this.fuse -= dt / 60;
-      if (this.fuse <= 0) {
+      const bounds = 500;
+      if (this.fuse <= 0 || this.y < -bounds || this.x < -bounds || this.x > this.game.width + bounds) {
         this.explode();
         return;
       }

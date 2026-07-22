@@ -67,6 +67,19 @@ export class InputManager {
         e.preventDefault();
       }
       
+      // Detonate Super Sheep with Space key during ACTION state
+      if (this.game.state === GameState.ACTION) {
+        if (e.code === 'Space' || e.key === ' ' || e.key === 'Spacebar') {
+          if (this.game.isOnline && !this.game.isLocalPlayerTurn) return;
+          const hasSheep = this.game.projectiles.some(p => p.type === 'super_sheep' && !p.isDead);
+          if (hasSheep) {
+            this.game.detonateSheep();
+            e.preventDefault();
+            return;
+          }
+        }
+      }
+
       // Change Grenade timer (1-5s) with number keys 1-5
       if (this.game.state === GameState.PLAYING) {
         if (e.key >= '1' && e.key <= '5') {

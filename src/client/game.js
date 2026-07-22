@@ -589,8 +589,8 @@ export class Game {
 
   handleMouseClick() {
     if (this.state === GameState.ACTION) {
-      const weapon = this.WEAPONS[this.selectedWeaponIndex];
-      if (weapon && weapon.id === 'super_sheep') {
+      const hasSheep = this.projectiles.some(p => p.type === 'super_sheep' && !p.isDead);
+      if (hasSheep) {
         this.detonateSheep();
         return;
       }
@@ -938,7 +938,7 @@ export class Game {
           }
         }
         
-        if (!p.contactFuse && p.fuse > 0) {
+        if ((!p.contactFuse || p.type === 'super_sheep') && p.fuse > 0) {
           p.fuse -= dt / 60;
         }
 
@@ -973,8 +973,8 @@ export class Game {
         }
       });
 
-      const activeWeapon = this.WEAPONS[this.selectedWeaponIndex];
-      const isSuperSheepFlying = this.state === GameState.ACTION && activeWeapon && activeWeapon.id === 'super_sheep';
+      const hasSuperSheep = this.projectiles.some(p => p.type === 'super_sheep' && !p.isDead);
+      const isSuperSheepFlying = this.state === GameState.ACTION && hasSuperSheep;
       if (this.isLocalPlayerTurn && (this.state === GameState.PLAYING || this.state === GameState.RETREAT || isSuperSheepFlying)) {
         this.handlePlayingInput(dt);
         this.mp.send({

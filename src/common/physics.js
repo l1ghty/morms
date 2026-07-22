@@ -248,6 +248,7 @@ export function setupWeaponProperties(type, selectedFuseTime) {
       props.radius = 6;
       props.affectedByWind = false;
       props.contactFuse = true;
+      props.fuse = 12.0;
       props.elasticity = 0.5;
       props.blastRadius = 90;
       props.maxDamage = 75;

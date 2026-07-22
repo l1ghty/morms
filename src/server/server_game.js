@@ -379,13 +379,10 @@ export class ServerGame {
     }
 
     if (this.state === 'ACTION') {
-      const team = this.teams[this.activeTeamIndex];
-      const weaponId = ['bazooka', 'grenade', 'cluster', 'holy', 'dynamite', 'airstrike', 'blowtorch', 'banana', 'baseball_bat', 'super_sheep', 'ninja_rope'][this.selectedWeaponIndex];
-      if (weaponId === 'super_sheep') {
-        const hasSuperSheep = this.projectiles.some(p => p.type === 'super_sheep');
-        if (!hasSuperSheep) {
-          this.startRetreat(RETREAT_DURATION_SHORT);
-        }
+      const hasSuperSheep = this.projectiles.some(p => p.type === 'super_sheep' && !p.isDead);
+      const isBlowtorchActive = this.blowtorchStep !== undefined;
+      if (!hasSuperSheep && !isBlowtorchActive) {
+        this.startRetreat(RETREAT_DURATION_SHORT);
       }
     }
     
