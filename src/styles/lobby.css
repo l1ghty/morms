@@ -413,6 +413,19 @@ h3 {
   margin-top: 0;
 }
 
+.warning-exit-fullscreen-btn {
+  margin-top: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  border-radius: 8px;
+  cursor: pointer;
+  z-index: 10000;
+  pointer-events: auto;
+}
+
 /* Phone rotation animation container */
 .rotate-phone-icon {
   position: relative;

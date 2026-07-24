@@ -244,6 +244,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Fullscreen Button toggle
   const btnFullscreen = document.getElementById('btn-fullscreen');
+  const warningExitFSBtn = document.getElementById('warning-exit-fullscreen-btn');
+
   if (btnFullscreen) {
     const toggleFullscreen = () => {
       const container = document.getElementById('game-container');
@@ -264,16 +266,34 @@ document.addEventListener('DOMContentLoaded', () => {
       e.stopPropagation();
       toggleFullscreen();
     }, { passive: false });
-    
-    // Also update UI state on fullscreen change (in case of Esc key press)
-    document.addEventListener('fullscreenchange', () => {
-      if (document.fullscreenElement) {
-        document.body.classList.add('fullscreen-active');
-      } else {
-        document.body.classList.remove('fullscreen-active');
-      }
-    });
   }
+
+  if (warningExitFSBtn) {
+    const exitFullscreen = (e) => {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(err => {
+          console.error(`Error exiting fullscreen: ${err.message}`);
+        });
+      }
+    };
+    warningExitFSBtn.addEventListener('click', exitFullscreen);
+    warningExitFSBtn.addEventListener('touchstart', exitFullscreen, { passive: false });
+  }
+
+  document.addEventListener('fullscreenchange', () => {
+    const warningBtn = document.getElementById('warning-exit-fullscreen-btn');
+    if (document.fullscreenElement) {
+      document.body.classList.add('fullscreen-active');
+      if (warningBtn) warningBtn.classList.remove('hidden');
+    } else {
+      document.body.classList.remove('fullscreen-active');
+      if (warningBtn) warningBtn.classList.add('hidden');
+    }
+  });
 
   // Handle Resize
 

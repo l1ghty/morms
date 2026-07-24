@@ -292,6 +292,14 @@ export class UIManager {
       
       if (!isLobby && isPortrait) {
         warning.classList.remove('hidden');
+        const exitFSBtn = document.getElementById('warning-exit-fullscreen-btn');
+        if (exitFSBtn) {
+          if (document.fullscreenElement) {
+            exitFSBtn.classList.remove('hidden');
+          } else {
+            exitFSBtn.classList.add('hidden');
+          }
+        }
       } else {
         warning.classList.add('hidden');
       }
