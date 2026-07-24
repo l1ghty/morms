@@ -239,24 +239,27 @@ export class ServerGame {
       
       let targetWorm = null;
       let minDist = 45;
-      for (const w of this.worms) {
-        if (w !== this.activeWorm && w.health > 0) {
-          const dx = w.x - this.activeWorm.x;
-          const dy = w.y - this.activeWorm.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < minDist) {
-            minDist = dist;
-            targetWorm = w;
+      if (this.activeWorm && this.activeWorm.health > 0) {
+        const facing = this.activeWorm.facingDir || 1;
+        for (const w of this.worms) {
+          if (w !== this.activeWorm && w.health > 0) {
+            const dx = w.x - this.activeWorm.x;
+            const dy = w.y - this.activeWorm.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < minDist) {
+              minDist = dist;
+              targetWorm = w;
+            }
           }
         }
-      }
-      
-      if (targetWorm) {
-        this.broadcastAudio('bounce'); // hit sound
-        targetWorm.damage(30);
-        targetWorm.vx = this.activeWorm.facingDir * 14;
-        targetWorm.vy = -10;
-        targetWorm.isFalling = true;
+        
+        if (targetWorm) {
+          this.broadcastAudio('bounce'); // hit sound
+          targetWorm.damage(30);
+          targetWorm.vx = facing * 14;
+          targetWorm.vy = -10;
+          targetWorm.isFalling = true;
+        }
       }
       
       this.startRetreat(RETREAT_DURATION_SHORT);
@@ -403,7 +406,7 @@ export class ServerGame {
     
     if (this.state === 'HANDOVER') {
       this.handoverTimer = (this.handoverTimer || 0) + dt;
-      if (this.handoverTimer >= 75) {
+      if (this.handoverTimer >= 1800) {
         this.handoverTimer = 0;
         this.startTurn();
       }
@@ -493,7 +496,9 @@ export class ServerGame {
         this.chargePower = data.chargePower;
       }
       if (data.type === 'fire') {
-        this.fireActiveWeapon(data.vx, data.vy, data.spawnX, data.spawnY, data.weaponId);
+        if (worm && worm.health > 0) {
+          this.fireActiveWeapon(data.vx, data.vy, data.spawnX, data.spawnY, data.weaponId);
+        }
       }
     }
     

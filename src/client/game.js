@@ -677,6 +677,29 @@ export class Game {
         this.audio.play('shoot_grenade');
       } else if (weapon.id === 'baseball_bat') {
         this.audio.play('shoot_bazooka');
+        let targetWorm = null;
+        let minDist = 45;
+        if (worm) {
+          for (const w of this.worms) {
+            if (w !== worm && w.health > 0) {
+              const dx = w.x - worm.x;
+              const dy = w.y - worm.y;
+              const dist = Math.sqrt(dx * dx + dy * dy);
+              if (dist < minDist) {
+                minDist = dist;
+                targetWorm = w;
+              }
+            }
+          }
+        }
+        if (targetWorm) {
+          this.audio.play('bounce');
+          this.camera.target = targetWorm;
+          this.particles.spawnBurst(targetWorm.x, targetWorm.y, 'fire', 8);
+          this.particles.spawnText(targetWorm.x, targetWorm.y - 20, 'WHACK!', '#f59e0b');
+        } else {
+          this.camera.target = worm;
+        }
       } else if (weapon.id === 'dynamite') {
         this.audio.play('fuse');
       } else if (weapon.id === 'blowtorch') {
@@ -997,6 +1020,12 @@ export class Game {
               this.ropeKeyDebounce = true;
               this.fireActiveWeapon();
               setTimeout(() => { this.ropeKeyDebounce = false; }, 200);
+            }
+          } else if (weapon.id === 'baseball_bat') {
+            if (!this.batKeyDebounce) {
+              this.batKeyDebounce = true;
+              this.fireActiveWeapon();
+              setTimeout(() => { this.batKeyDebounce = false; }, 300);
             }
           } else {
             if (this.activeWorm && this.activeWorm.rope && this.activeWorm.rope.attached) {
