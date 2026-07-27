@@ -2,6 +2,7 @@
 @import './lobby.css';
 @import './hud.css';
 @import './handover.css';
+@import './map_editor.css';
 
 /* Responsive Scaling Overrides */
 @media (max-height: 600px) {

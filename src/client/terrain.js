@@ -1,3 +1,5 @@
+import { CustomMapManager } from '../common/custom_map_manager.js';
+
 export class Terrain {
   constructor(width, height, type = 'island') {
     this.width = width;
@@ -19,24 +21,87 @@ export class Terrain {
   generate() {
     this.ctx.clearRect(0, 0, this.width, this.height);
     
-    // Draw sky background pattern (optional, usually terrain has transparent background)
-    // We want the terrain canvas to have transparency where there is no dirt, so we can see the sky behind it!
-    
-    if (this.type === 'island') {
-      this.generateIsland();
+    let customData = null;
+    if (typeof this.type === 'object' && this.type !== null) {
+      customData = this.type;
+    } else if (typeof this.type === 'string' && this.type.startsWith('custom:')) {
+      customData = CustomMapManager.getMapById(this.type);
+    }
+
+    if (customData) {
+      this.generateCustom(customData);
     } else if (this.type === 'cave') {
       this.generateCave();
-    } else {
+    } else if (this.type === 'canyon') {
       this.generateCanyon();
+    } else {
+      this.generateIsland();
     }
     
     // Compile CPU collision mask from the rendered canvas pixels (alpha channel > 120 means solid)
     const imgData = this.ctx.getImageData(0, 0, this.width, this.height);
     const data = imgData.data;
     for (let i = 0; i < this.collisionMask.length; i++) {
-      // Data is [R, G, B, A, R, G, B, A...]
       const alphaIndex = i * 4 + 3;
       this.collisionMask[i] = data[alphaIndex] > 120 ? 1 : 0;
+    }
+  }
+
+  generateCustom(mapData) {
+    const base = mapData.baseType || 'island';
+    if (base === 'cave') {
+      this.generateCave();
+    } else if (base === 'canyon') {
+      this.generateCanyon();
+    } else if (base === 'blank') {
+      // blank sky
+    } else {
+      this.generateIsland();
+    }
+
+    if (Array.isArray(mapData.additions)) {
+      const ctx = this.ctx;
+      mapData.additions.forEach(add => {
+        ctx.save();
+        ctx.fillStyle = this.getDirtGradient();
+        ctx.beginPath();
+        ctx.arc(add.x, add.y, add.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#22c55e';
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.arc(add.x, add.y, add.r, Math.PI * 1.1, Math.PI * 1.9, false);
+        ctx.stroke();
+        ctx.restore();
+      });
+    }
+
+    if (Array.isArray(mapData.platforms)) {
+      const ctx = this.ctx;
+      mapData.platforms.forEach(plat => {
+        ctx.save();
+        ctx.fillStyle = '#64748b';
+        ctx.fillRect(plat.x - plat.w / 2, plat.y - plat.h / 2, plat.w, plat.h);
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(plat.x - plat.w / 2, plat.y - plat.h / 2, plat.w, plat.h);
+        ctx.fillStyle = '#22c55e';
+        ctx.fillRect(plat.x - plat.w / 2, plat.y - plat.h / 2, plat.w, 4);
+        ctx.restore();
+      });
+    }
+
+    if (Array.isArray(mapData.carves)) {
+      mapData.carves.forEach(carve => {
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.fillStyle = 'rgba(0, 0, 0, 1)';
+        ctx.beginPath();
+        ctx.arc(carve.x, carve.y, carve.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
     }
   }
 

@@ -7,6 +7,7 @@ import { MultiplayerManager } from './multiplayer.js';
 import { GameState, WEAPONS, MAP_WIDTH, MAP_HEIGHT, WATER_LEVEL, GRAVITY, TURN_DURATION, RETREAT_DURATION_SHORT, RETREAT_DURATION_LONG, DEFAULT_FUSE_TIME, MAX_CHARGE, CHARGE_RATE, CAMERA_LERP_SPEED, TEAM_RED, TEAM_BLUE, WORM_NAMES_RED, WORM_NAMES_BLUE, DEFAULT_SETTINGS } from '../common/constants.js';
 import { UIManager } from './ui_manager.js';
 import { InputManager } from './input_manager.js';
+import { CustomMapManager } from '../common/custom_map_manager.js';
 import { getSafeSpawnPoint, getActiveTeamWorm, rotateActiveWorm, getRandomWindStrength } from '../common/physics.js';
 
 export class Game {
@@ -68,6 +69,7 @@ export class Game {
     this.wormsDrowned = 0;
     this.turnsPlayed = 0;
     this.selectedFuseTime = DEFAULT_FUSE_TIME;
+    this.launchedFromEditor = false;
     
     // Online Multiplayer properties
     this.mp = new MultiplayerManager(this);
@@ -120,6 +122,54 @@ export class Game {
     this.ui.toggleWeaponMenu(forceState);
   }
 
+  togglePauseMenu(forceState) {
+    this.ui.togglePauseMenu(forceState);
+  }
+
+  returnToEditor() {
+    if (this.timerInterval) clearInterval(this.timerInterval);
+    const hud = document.getElementById('game-hud');
+    const gameOverScreen = document.getElementById('game-over-screen');
+    const handoverScreen = document.getElementById('handover-screen');
+    const pauseMenu = document.getElementById('pause-menu-overlay');
+    
+    if (hud) hud.classList.add('hidden');
+    if (gameOverScreen) gameOverScreen.classList.add('hidden');
+    if (handoverScreen) handoverScreen.classList.add('hidden');
+    if (pauseMenu) pauseMenu.classList.add('hidden');
+    
+    const editorScreen = document.getElementById('map-editor-screen');
+    if (editorScreen) editorScreen.classList.remove('hidden');
+    
+    if (window.mapEditor) {
+      window.mapEditor.resizeEditor();
+      window.mapEditor.render();
+    }
+  }
+
+  returnToMainMenu() {
+    if (this.timerInterval) clearInterval(this.timerInterval);
+    const wasOnline = this.isOnline;
+    if (wasOnline) {
+      this.mp.send({ type: 'return_to_lobby' });
+      this.disconnectOnline();
+    }
+    
+    const hud = document.getElementById('game-hud');
+    const gameOverScreen = document.getElementById('game-over-screen');
+    const handoverScreen = document.getElementById('handover-screen');
+    const pauseMenu = document.getElementById('pause-menu-overlay');
+    
+    if (hud) hud.classList.add('hidden');
+    if (gameOverScreen) gameOverScreen.classList.add('hidden');
+    if (handoverScreen) handoverScreen.classList.add('hidden');
+    if (pauseMenu) pauseMenu.classList.add('hidden');
+    
+    this.state = GameState.LOBBY;
+    const startScreen = document.getElementById('start-screen');
+    if (startScreen) startScreen.classList.remove('hidden');
+  }
+
   resetLobbyUI() {
     this.ui.resetLobbyUI();
   }
@@ -130,6 +180,7 @@ export class Game {
 
   start(settings, syncWorms = null, skipSetupTurn = false) {
     this.settings = settings;
+    this.launchedFromEditor = !!(settings && settings.launchedFromEditor);
     this.state = GameState.START_TURN;
     
     this.totalDamageDealt = 0;
@@ -235,7 +286,17 @@ export class Game {
   }
 
   hostStartOnlineMatch() {
-    this.mp.send({ type: 'host_start' });
+    const lobbyMap = document.getElementById('lobby-map-type-select');
+    const mapType = lobbyMap ? lobbyMap.value : 'island';
+    let customMapData = null;
+    if (mapType && typeof mapType === 'string' && mapType.startsWith('custom:')) {
+      customMapData = CustomMapManager.getMapById(mapType);
+    }
+    this.mp.send({
+      type: 'host_start',
+      mapType: mapType,
+      customMapData: customMapData
+    });
   }
 
   handleIncomingRoomsList(data) {
@@ -258,9 +319,15 @@ export class Game {
     this.isOnline = true;
     this.onlinePlayerNumber = this.mp.playerNumber;
 
+    if (data.customMapData) {
+      const regMap = CustomMapManager.registerRemoteMultiplayerMap(data.customMapData);
+      data.customMapData = regMap;
+      this.ui.populateMapSelects();
+    }
+
     const settings = {
       wormsPerTeam: data.wormsPerTeam,
-      mapType: data.mapType
+      mapType: data.customMapData ? data.customMapData.id : data.mapType
     };
     this.start(settings, data.worms, true);
 

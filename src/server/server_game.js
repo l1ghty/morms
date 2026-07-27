@@ -13,7 +13,7 @@ export class ServerGame {
     this.gravity = GRAVITY;
     
     this.projectileIdCounter = 1;
-    this.terrain = new ServerTerrain(this.width, this.height, room.mapType);
+    this.terrain = new ServerTerrain(this.width, this.height, room.customMapData || room.mapType);
     this.worms = [];
     this.projectiles = [];
     

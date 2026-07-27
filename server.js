@@ -1,5 +1,6 @@
 import { WebSocketServer } from 'ws';
 import { ServerGame } from './src/server/server_game.js';
+import { CustomMapManager } from './src/common/custom_map_manager.js';
 import http from 'http';
 import fs from 'fs';
 import path from 'path';
@@ -116,6 +117,10 @@ wss.on('connection', (ws) => {
         const roomName = data.roomName ? data.roomName.trim() : `Room #${roomId}`;
         const p1Name = data.playerName ? data.playerName.trim() : 'Red Team';
         
+        if (data.customMapData) {
+          CustomMapManager.registerMap(data.customMapData);
+        }
+
         rooms[roomId] = {
           id: roomId,
           name: roomName,
@@ -124,6 +129,7 @@ wss.on('connection', (ws) => {
           p2: null,
           p2Name: '',
           mapType: data.mapType,
+          customMapData: data.customMapData || null,
           wormsPerTeam: data.wormsPerTeam,
           status: 'waiting'
         };
@@ -181,6 +187,7 @@ wss.on('connection', (ws) => {
             hostName: room.p1Name,
             opponentName: p2Name,
             mapType: room.mapType,
+            customMapData: room.customMapData,
             wormsPerTeam: room.wormsPerTeam
           }));
           
@@ -198,13 +205,18 @@ wss.on('connection', (ws) => {
         if (room && ws.playerNumber === 1 && room.status !== 'playing') {
           room.wormsPerTeam = data.wormsPerTeam;
           room.mapType = data.mapType;
+          if (data.customMapData) {
+            room.customMapData = data.customMapData;
+            CustomMapManager.registerMap(data.customMapData);
+          }
           console.log(`Room ${roomId} settings updated: worms=${room.wormsPerTeam}, map=${room.mapType}`);
           
           if (room.p2) {
             room.p2.send(JSON.stringify({
               type: 'settings_updated',
               wormsPerTeam: room.wormsPerTeam,
-              mapType: room.mapType
+              mapType: room.mapType,
+              customMapData: room.customMapData
             }));
           }
           broadcastRoomList();
@@ -232,6 +244,10 @@ wss.on('connection', (ws) => {
         
         if (room && room.status === 'ready' && ws.playerNumber === 1) {
           room.status = 'playing';
+          if (data.customMapData) {
+            room.customMapData = data.customMapData;
+            CustomMapManager.registerMap(data.customMapData);
+          }
           console.log(`Host starting match in room ${room.name} (${roomId})`);
           
           // Instantiate the server-side simulation Game
@@ -240,6 +256,7 @@ wss.on('connection', (ws) => {
           const startMsg = JSON.stringify({
             type: 'start_match',
             mapType: room.mapType,
+            customMapData: room.customMapData,
             wormsPerTeam: room.wormsPerTeam,
             p1Name: room.p1Name,
             p2Name: room.p2Name,

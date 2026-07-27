@@ -1,4 +1,6 @@
 import { Game } from './client/game.js';
+import { MapEditor } from './client/map_editor.js';
+import { CustomMapManager } from './common/custom_map_manager.js';
 
 let game = null;
 
@@ -9,8 +11,16 @@ document.addEventListener('DOMContentLoaded', () => {
   game = new Game(canvas);
   window.game = game;
 
-  // Setup Game Mode button selection to launch game immediately
-  const modeButtons = document.querySelectorAll('.mode-btn');
+  // Populate custom maps in selects
+  game.ui.populateMapSelects();
+
+  // Instantiate Map Editor
+  const mapEditor = new MapEditor(game);
+  mapEditor.init();
+  window.mapEditor = mapEditor;
+
+  // Mode buttons selector
+  const modeButtons = document.querySelectorAll('.mode-btn[data-mode]');
   modeButtons.forEach(btn => {
     btn.addEventListener('click', () => {
       const mode = btn.getAttribute('data-mode');
@@ -80,10 +90,16 @@ document.addEventListener('DOMContentLoaded', () => {
   
   const sendLobbySettingsUpdate = () => {
     if (game && game.isOnline) {
+      const mapType = lobbyMapType.value;
+      let customMapData = null;
+      if (mapType && typeof mapType === 'string' && mapType.startsWith('custom:')) {
+        customMapData = CustomMapManager.getMapById(mapType);
+      }
       game.mp.send({
         type: 'update_settings',
         wormsPerTeam: parseInt(lobbyWormCount.value, 10),
-        mapType: lobbyMapType.value
+        mapType: mapType,
+        customMapData: customMapData
       });
     }
   };
@@ -170,8 +186,193 @@ document.addEventListener('DOMContentLoaded', () => {
     game.toggleWeaponMenu(false);
   });
 
-  // Handle keyboard inputs for weapon selection
+  // Map Editor Event Listeners
+  const openMapEditorBtn = document.getElementById('open-map-editor-btn');
+  if (openMapEditorBtn) {
+    openMapEditorBtn.addEventListener('click', () => {
+      document.getElementById('start-screen').classList.add('hidden');
+      document.getElementById('map-editor-screen').classList.remove('hidden');
+      mapEditor.populateSavedMapsDropdown();
+      mapEditor.resizeEditor();
+      mapEditor.render();
+    });
+  }
+
+  const editorLoadMapSelect = document.getElementById('editor-load-map-select');
+  if (editorLoadMapSelect) {
+    editorLoadMapSelect.addEventListener('change', () => {
+      const selectedId = editorLoadMapSelect.value;
+      if (selectedId) {
+        const mapData = CustomMapManager.getMapById(selectedId);
+        if (mapData) {
+          mapEditor.loadMapData(mapData);
+        }
+      }
+    });
+  }
+
+  const editorNewBtn = document.getElementById('editor-new-btn');
+  if (editorNewBtn) {
+    editorNewBtn.addEventListener('click', () => {
+      mapEditor.newMap();
+    });
+  }
+
+  const editorDeleteBtn = document.getElementById('editor-delete-btn');
+  if (editorDeleteBtn) {
+    editorDeleteBtn.addEventListener('click', () => {
+      if (confirm(`Are you sure you want to delete map "${mapEditor.mapName}"?`)) {
+        mapEditor.deleteCurrentMap();
+        game.ui.populateMapSelects();
+        alert('Map deleted.');
+      }
+    });
+  }
+
+  const editorBackBtn = document.getElementById('editor-back-btn');
+  if (editorBackBtn) {
+    editorBackBtn.addEventListener('click', () => {
+      document.getElementById('map-editor-screen').classList.add('hidden');
+      document.getElementById('start-screen').classList.remove('hidden');
+    });
+  }
+
+  const toolBtns = document.querySelectorAll('.editor-tool-btn[data-tool]');
+  toolBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      toolBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      mapEditor.currentTool = btn.getAttribute('data-tool');
+    });
+  });
+
+  const sizeBtns = document.querySelectorAll('.brush-size-btn[data-size]');
+  sizeBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      sizeBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      mapEditor.brushSize = parseInt(btn.getAttribute('data-size'), 10);
+    });
+  });
+
+  const templateSelect = document.getElementById('editor-template-select');
+  if (templateSelect) {
+    templateSelect.addEventListener('change', () => {
+      mapEditor.initTemplate(templateSelect.value);
+    });
+  }
+
+  const editorResetBtn = document.getElementById('editor-reset-btn');
+  if (editorResetBtn) {
+    editorResetBtn.addEventListener('click', () => {
+      mapEditor.initTemplate(mapEditor.baseType);
+    });
+  }
+
+  const editorSaveBtn = document.getElementById('editor-save-btn');
+  if (editorSaveBtn) {
+    editorSaveBtn.addEventListener('click', () => {
+      const saved = mapEditor.saveMap();
+      game.ui.populateMapSelects();
+      const mapSelect = document.getElementById('map-type-select');
+      if (mapSelect) mapSelect.value = saved.id;
+      alert(`Map "${saved.name}" saved successfully!`);
+    });
+  }
+
+  const editorExportBtn = document.getElementById('editor-export-btn');
+  if (editorExportBtn) {
+    editorExportBtn.addEventListener('click', () => {
+      mapEditor.exportJSON();
+    });
+  }
+
+  const editorImportInput = document.getElementById('editor-import-input');
+  if (editorImportInput) {
+    editorImportInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        mapEditor.importJSON(e.target.files[0]);
+      }
+    });
+  }
+
+  const editorPlayBtn = document.getElementById('editor-play-btn');
+  if (editorPlayBtn) {
+    editorPlayBtn.addEventListener('click', () => {
+      const savedMap = mapEditor.saveMap();
+      game.ui.populateMapSelects();
+      document.getElementById('map-editor-screen').classList.add('hidden');
+      document.getElementById('game-hud').classList.remove('hidden');
+      
+      const wormCountSelect = document.getElementById('worm-count-select');
+      const wormsPerTeam = wormCountSelect ? parseInt(wormCountSelect.value, 10) : 3;
+      
+      game.start({
+        wormsPerTeam: wormsPerTeam,
+        mapType: savedMap.id,
+        mode: 'local',
+        launchedFromEditor: true
+      });
+    });
+  }
+
+  // Hook up In-Game Menu & Pause controls
+  const ingameMenuBtn = document.getElementById('ingame-menu-btn');
+  if (ingameMenuBtn) {
+    ingameMenuBtn.addEventListener('click', () => {
+      game.togglePauseMenu();
+    });
+  }
+
+  const pauseResumeBtn = document.getElementById('pause-resume-btn');
+  if (pauseResumeBtn) {
+    pauseResumeBtn.addEventListener('click', () => {
+      game.togglePauseMenu(false);
+    });
+  }
+
+  const pauseEditorBtn = document.getElementById('pause-editor-btn');
+  if (pauseEditorBtn) {
+    pauseEditorBtn.addEventListener('click', () => {
+      game.returnToEditor();
+    });
+  }
+
+  const pauseMainMenuBtn = document.getElementById('pause-main-menu-btn');
+  if (pauseMainMenuBtn) {
+    pauseMainMenuBtn.addEventListener('click', () => {
+      game.returnToMainMenu();
+    });
+  }
+
+  const gameOverEditorBtn = document.getElementById('game-over-editor-btn');
+  if (gameOverEditorBtn) {
+    gameOverEditorBtn.addEventListener('click', () => {
+      game.returnToEditor();
+    });
+  }
+
+  const handoverExitBtn = document.getElementById('handover-exit-btn');
+  if (handoverExitBtn) {
+    handoverExitBtn.addEventListener('click', () => {
+      if (game && game.launchedFromEditor) {
+        game.returnToEditor();
+      } else if (game) {
+        game.returnToMainMenu();
+      }
+    });
+  }
+
+  // Handle keyboard inputs for weapon selection & Escape key for Pause Menu
   window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const isEditorOpen = !document.getElementById('map-editor-screen').classList.contains('hidden');
+      const isStartOpen = !document.getElementById('start-screen').classList.contains('hidden');
+      if (!isEditorOpen && !isStartOpen) {
+        game.togglePauseMenu();
+        e.preventDefault();
+      }
+    }
     if (e.key === 'Tab') {
       e.preventDefault();
       game.toggleWeaponMenu();

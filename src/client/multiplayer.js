@@ -1,3 +1,5 @@
+import { CustomMapManager } from '../common/custom_map_manager.js';
+
 export class MultiplayerManager {
   constructor(game) {
     this.game = game;
@@ -41,11 +43,16 @@ export class MultiplayerManager {
   }
 
   createRoom(roomName, playerName, mapType, wormsPerTeam) {
+    let customMapData = null;
+    if (mapType && typeof mapType === 'string' && mapType.startsWith('custom:')) {
+      customMapData = CustomMapManager.getMapById(mapType);
+    }
     this.send({
       type: 'create_room',
       roomName,
       playerName,
       mapType,
+      customMapData,
       wormsPerTeam
     });
   }
@@ -178,23 +185,34 @@ export class MultiplayerManager {
             </div>`;
         }
         
+        if (data.customMapData) {
+          data.customMapData = CustomMapManager.registerRemoteMultiplayerMap(data.customMapData);
+          if (this.game && this.game.ui) this.game.ui.populateMapSelects();
+        }
+
         // Update guest settings display
         const guestWorms = document.getElementById('guest-worms-display');
         const guestTerrain = document.getElementById('guest-terrain-display');
         if (guestWorms && data.wormsPerTeam !== undefined) guestWorms.textContent = data.wormsPerTeam;
         if (guestTerrain && data.mapType !== undefined) {
           const mapNames = { island: 'Island', cave: 'Cave', canyon: 'Canyon' };
-          guestTerrain.textContent = mapNames[data.mapType] || data.mapType;
+          const customName = data.customMapData ? data.customMapData.name : null;
+          guestTerrain.textContent = mapNames[data.mapType] || customName || data.mapType;
         }
         break;
       case 'settings_updated':
         console.log('Lobby settings updated:', data);
+        if (data.customMapData) {
+          data.customMapData = CustomMapManager.registerRemoteMultiplayerMap(data.customMapData);
+          if (this.game && this.game.ui) this.game.ui.populateMapSelects();
+        }
         const guestWormsDisplay = document.getElementById('guest-worms-display');
         const guestTerrainDisplay = document.getElementById('guest-terrain-display');
         if (guestWormsDisplay) guestWormsDisplay.textContent = data.wormsPerTeam;
         if (guestTerrainDisplay) {
           const mapNames = { island: 'Island', cave: 'Cave', canyon: 'Canyon' };
-          guestTerrainDisplay.textContent = mapNames[data.mapType] || data.mapType;
+          const customName = data.customMapData ? data.customMapData.name : null;
+          guestTerrainDisplay.textContent = mapNames[data.mapType] || customName || data.mapType;
         }
         break;
       case 'start_match':

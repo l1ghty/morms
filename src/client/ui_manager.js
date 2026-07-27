@@ -1,8 +1,48 @@
 import { GameState } from '../common/constants.js';
+import { CustomMapManager } from '../common/custom_map_manager.js';
 
 export class UIManager {
   constructor(game) {
     this.game = game;
+  }
+
+  populateMapSelects() {
+    const customMaps = CustomMapManager.getCustomMaps();
+    const seenNames = new Set();
+    const uniqueMaps = [];
+    customMaps.forEach(m => {
+      if (m && m.id && m.name) {
+        let mapName = m.name;
+        if (seenNames.has(mapName)) {
+          const checksum = CustomMapManager.computeChecksum(m);
+          mapName = `${mapName} (${checksum})`;
+          let counter = 2;
+          while (seenNames.has(mapName)) {
+            mapName = `${m.name} (${checksum}-${counter})`;
+            counter++;
+          }
+        }
+        seenNames.add(mapName);
+        uniqueMaps.push({ id: m.id, name: mapName });
+      }
+    });
+
+    ['map-type-select', 'lobby-map-type-select'].forEach(id => {
+      const select = document.getElementById(id);
+      if (!select) return;
+      const currentVal = select.value;
+      select.innerHTML = `
+        <optgroup label="Procedural Terrains">
+          <option value="island">Procedural Island</option>
+          <option value="cave">Procedural Cave</option>
+          <option value="canyon">Procedural Canyon</option>
+        </optgroup>
+        <optgroup label="Custom Maps">
+          ${uniqueMaps.map(m => `<option value="${m.id}">${m.name}</option>`).join('')}
+        </optgroup>
+      `;
+      if (currentVal) select.value = currentVal;
+    });
   }
 
   // Populate HTML weapon grid
@@ -306,6 +346,28 @@ export class UIManager {
     }
   }
 
+  togglePauseMenu(forceState) {
+    const overlay = document.getElementById('pause-menu-overlay');
+    if (!overlay) return;
+    
+    let isHidden = overlay.classList.contains('hidden');
+    let targetShow = forceState !== undefined ? forceState : isHidden;
+    
+    if (targetShow) {
+      overlay.classList.remove('hidden');
+      const editorBtn = document.getElementById('pause-editor-btn');
+      if (editorBtn) {
+        if (this.game.launchedFromEditor) {
+          editorBtn.classList.remove('hidden');
+        } else {
+          editorBtn.classList.add('hidden');
+        }
+      }
+    } else {
+      overlay.classList.add('hidden');
+    }
+  }
+
   showGameOver(winningTeam) {
     const hud = document.getElementById('game-hud');
     const gameOverScreen = document.getElementById('game-over-screen');
@@ -327,6 +389,15 @@ export class UIManager {
     const menuBtn = document.getElementById('main-menu-btn');
     if (menuBtn) {
       menuBtn.textContent = this.game.isOnline ? 'Return to Lobby' : 'Main Menu';
+    }
+
+    const editorBtn = document.getElementById('game-over-editor-btn');
+    if (editorBtn) {
+      if (this.game.launchedFromEditor) {
+        editorBtn.classList.remove('hidden');
+      } else {
+        editorBtn.classList.add('hidden');
+      }
     }
   }
 

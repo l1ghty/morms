@@ -72,6 +72,12 @@
             </div>
             <span id="wind-text">0 km/h</span>
           </div>
+
+          <!-- Pause / Match Menu Button -->
+          <div class="hud-panel menu-panel" id="ingame-menu-btn" title="Open Pause / Match Menu (or press Esc)" style="cursor: pointer; pointer-events: auto;">
+            <span class="hud-label">MATCH</span>
+            <span style="font-weight: 700; font-size: 0.9rem; color: #fff;">⚙️ Menu</span>
+          </div>
         </div>
 
         <!-- Weapon & Power controls at bottom -->
@@ -185,6 +191,8 @@
                     Play)</button>
                   <button type="button" class="mode-btn btn-primary-style" data-mode="online">Online
                     Multiplayer</button>
+                  <button type="button" id="open-map-editor-btn" class="mode-btn btn-primary-style"
+                    style="background: rgba(147, 51, 234, 0.35); border-color: rgba(168, 85, 247, 0.6); text-shadow: 0 0 8px rgba(192, 132, 252, 0.5);">🎨 Map Editor</button>
                 </div>
               </div>
             </div>
@@ -204,6 +212,58 @@
             </ul>
           </div>
 
+        </div>
+      </div>
+
+      <!-- Map Editor Overlay (Hidden by default) -->
+      <div id="map-editor-screen" class="editor-overlay hidden">
+        <div class="editor-header">
+          <div class="editor-header-left">
+            <button id="editor-back-btn" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.85rem;">◀ Main Menu</button>
+            <select id="editor-load-map-select" class="editor-select" style="max-width: 170px;">
+              <option value="">-- Load Saved Map --</option>
+            </select>
+            <button id="editor-new-btn" class="btn btn-secondary" style="padding: 6px 10px; font-size: 0.85rem;" title="Create New Map">➕ New</button>
+            <input type="text" id="editor-map-name" class="editor-title-input" value="Custom Fortress" placeholder="Map Name">
+            <select id="editor-template-select" class="editor-select">
+              <option value="island" selected>Base: Island</option>
+              <option value="cave">Base: Cave</option>
+              <option value="canyon">Base: Canyon</option>
+              <option value="blank">Base: Blank (Air)</option>
+            </select>
+          </div>
+          <div class="editor-header-right">
+            <button id="editor-delete-btn" class="btn btn-secondary hidden" style="padding: 6px 10px; font-size: 0.85rem; color: #f87171; border-color: rgba(239,68,68,0.4);" title="Delete Map">🗑️ Delete</button>
+            <button id="editor-save-btn" class="btn btn-primary" style="padding: 6px 14px; font-size: 0.85rem; background: #059669; border-color: #10b981;">💾 Save Map</button>
+            <button id="editor-export-btn" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.85rem;">📥 Export JSON</button>
+            <label for="editor-import-input" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.85rem; cursor: pointer; margin: 0;">📤 Import JSON</label>
+            <input type="file" id="editor-import-input" accept=".json" style="display: none;">
+            <button id="editor-play-btn" class="btn btn-primary" style="padding: 6px 16px; font-size: 0.85rem; background: #2563eb; border-color: #3b82f6;">▶️ Play Map</button>
+          </div>
+        </div>
+
+        <div id="editor-canvas-container" class="editor-canvas-container">
+          <canvas id="editor-canvas"></canvas>
+
+          <!-- Floating Tool Palette -->
+          <div class="editor-toolbar">
+            <div class="tool-group">
+              <button class="editor-tool-btn active" data-tool="draw" title="Draw Terrain">✏️ Draw Dirt</button>
+              <button class="editor-tool-btn" data-tool="carve" title="Erase / Dig Terrain">🧽 Carve</button>
+              <button class="editor-tool-btn" data-tool="platform" title="Add Platform Slab">⛰️ Platform</button>
+              <button class="editor-tool-btn" data-tool="crater" title="Stamp Crater Hole">💥 Crater</button>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="tool-group">
+              <span style="font-size: 0.75rem; color: rgba(255,255,255,0.6); font-weight: 600;">Size:</span>
+              <button class="brush-size-btn" data-size="15">S</button>
+              <button class="brush-size-btn active" data-size="30">M</button>
+              <button class="brush-size-btn" data-size="60">L</button>
+              <button class="brush-size-btn" data-size="100">XL</button>
+            </div>
+            <div class="toolbar-divider"></div>
+            <button id="editor-reset-btn" class="editor-tool-btn" style="color: #f87171; border-color: rgba(239, 68, 68, 0.4);" title="Reset to base template">🔄 Reset</button>
+          </div>
         </div>
       </div>
 
@@ -227,7 +287,23 @@
             <div id="handover-avatar" class="handover-avatar">👥</div>
             <span id="handover-worm-name" class="highlight-text" style="font-size: 1.25rem;">Mormy is up next</span>
           </div>
-          <button id="handover-start-btn" class="btn btn-primary">Start Turn</button>
+          <div style="display: flex; gap: 12px; justify-content: center; align-items: center;">
+            <button id="handover-start-btn" class="btn btn-primary">Start Turn</button>
+            <button id="handover-exit-btn" class="btn btn-secondary" style="padding: 10px 18px; font-size: 0.9rem;">Exit Match</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- In-Game Pause / Match Menu Overlay -->
+      <div id="pause-menu-overlay" class="screen-overlay hidden">
+        <div class="menu-card glass-panel text-center" style="max-width: 380px;">
+          <h2 style="margin-bottom: 4px;">Match Menu</h2>
+          <p class="subtitle" style="margin-bottom: 20px;">Game Paused</p>
+          <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
+            <button id="pause-resume-btn" class="btn btn-primary">Resume Game</button>
+            <button id="pause-editor-btn" class="btn btn-primary hidden" style="background: rgba(147, 51, 234, 0.75); border-color: rgba(168, 85, 247, 0.8);">🎨 Return to Map Editor</button>
+            <button id="pause-main-menu-btn" class="btn btn-secondary">🏠 Main Menu</button>
+          </div>
         </div>
       </div>
 
@@ -255,7 +331,10 @@
             </div>
           </div>
 
-          <button id="main-menu-btn" class="btn btn-primary">Main Menu</button>
+          <div style="display: flex; gap: 12px; justify-content: center; width: 100%; margin-top: 16px;">
+            <button id="game-over-editor-btn" class="btn btn-primary hidden" style="background: rgba(147, 51, 234, 0.75); border-color: rgba(168, 85, 247, 0.8);">🎨 Return to Editor</button>
+            <button id="main-menu-btn" class="btn btn-primary">Main Menu</button>
+          </div>
         </div>
       </div>
 

@@ -1,3 +1,5 @@
+import { CustomMapManager } from '../common/custom_map_manager.js';
+
 export class ServerTerrain {
   constructor(width, height, type = 'island') {
     this.width = width;
@@ -37,6 +39,18 @@ export class ServerTerrain {
   generate() {
     const width = this.width;
     const height = this.height;
+    
+    let customData = null;
+    if (typeof this.type === 'object' && this.type !== null) {
+      customData = this.type;
+    } else if (typeof this.type === 'string' && this.type.startsWith('custom:')) {
+      customData = CustomMapManager.getMapById(this.type);
+    }
+
+    if (customData) {
+      this.generateCustom(customData);
+      return;
+    }
     
     if (this.type === 'island') {
       const baseline = height * 0.65;
@@ -88,6 +102,70 @@ export class ServerTerrain {
           this.collisionMask[yFill * width + x] = 1;
         }
       }
+    }
+  }
+
+  generateCustom(mapData) {
+    const base = mapData.baseType || 'island';
+    if (base === 'cave') {
+      this.type = 'cave';
+      this.generate();
+    } else if (base === 'canyon') {
+      this.type = 'canyon';
+      this.generate();
+    } else if (base === 'blank') {
+      this.collisionMask.fill(0);
+    } else {
+      this.type = 'island';
+      this.generate();
+    }
+    this.type = mapData.id || 'custom';
+
+    if (Array.isArray(mapData.additions)) {
+      mapData.additions.forEach(add => {
+        const cx = add.x;
+        const cy = add.y;
+        const r = add.r;
+        const rSq = r * r;
+        const startX = Math.max(0, Math.floor(cx - r));
+        const endX = Math.min(this.width - 1, Math.ceil(cx + r));
+        const startY = Math.max(0, Math.floor(cy - r));
+        const endY = Math.min(this.height - 1, Math.ceil(cy + r));
+        
+        for (let y = startY; y <= endY; y++) {
+          const dy = y - cy;
+          const dy2 = dy * dy;
+          const rowOffset = y * this.width;
+          for (let x = startX; x <= endX; x++) {
+            const dx = x - cx;
+            if (dx * dx + dy2 <= rSq) {
+              this.collisionMask[rowOffset + x] = 1;
+            }
+          }
+        }
+      });
+    }
+
+    if (Array.isArray(mapData.platforms)) {
+      mapData.platforms.forEach(plat => {
+        const startX = Math.max(0, Math.floor(plat.x - plat.w / 2));
+        const endX = Math.min(this.width - 1, Math.ceil(plat.x + plat.w / 2));
+        const startY = Math.max(0, Math.floor(plat.y - plat.h / 2));
+        const endY = Math.min(this.height - 1, Math.ceil(plat.y + plat.h / 2));
+        
+        for (let y = startY; y <= endY; y++) {
+          const rowOffset = y * this.width;
+          for (let x = startX; x <= endX; x++) {
+            this.collisionMask[rowOffset + x] = 1;
+          }
+        }
+      });
+    }
+
+    if (Array.isArray(mapData.carves)) {
+      mapData.carves.forEach(carve => {
+        this.carve(carve.x, carve.y, carve.r);
+      });
     }
   }
 }
