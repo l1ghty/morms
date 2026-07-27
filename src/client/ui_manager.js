@@ -1,5 +1,5 @@
 import { GameState } from '../common/constants.js';
-import { CustomMapManager } from '../common/custom_map_manager.js';
+import { CustomMapManager, escapeHTML } from '../common/custom_map_manager.js';
 
 export class UIManager {
   constructor(game) {
@@ -38,7 +38,7 @@ export class UIManager {
           <option value="canyon">Procedural Canyon</option>
         </optgroup>
         <optgroup label="Custom Maps">
-          ${uniqueMaps.map(m => `<option value="${m.id}">${m.name}</option>`).join('')}
+          ${uniqueMaps.map(m => `<option value="${escapeHTML(m.id)}">${escapeHTML(m.name)}</option>`).join('')}
         </optgroup>
       `;
       if (currentVal) select.value = currentVal;

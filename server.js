@@ -117,8 +117,10 @@ wss.on('connection', (ws) => {
         const roomName = data.roomName ? data.roomName.trim() : `Room #${roomId}`;
         const p1Name = data.playerName ? data.playerName.trim() : 'Red Team';
         
+        let sanitizedMapData = null;
         if (data.customMapData) {
-          CustomMapManager.registerMap(data.customMapData);
+          sanitizedMapData = CustomMapManager.sanitizeMapData(data.customMapData);
+          if (sanitizedMapData) CustomMapManager.registerMap(sanitizedMapData);
         }
 
         rooms[roomId] = {
@@ -129,7 +131,7 @@ wss.on('connection', (ws) => {
           p2: null,
           p2Name: '',
           mapType: data.mapType,
-          customMapData: data.customMapData || null,
+          customMapData: sanitizedMapData,
           wormsPerTeam: data.wormsPerTeam,
           status: 'waiting'
         };
@@ -206,8 +208,11 @@ wss.on('connection', (ws) => {
           room.wormsPerTeam = data.wormsPerTeam;
           room.mapType = data.mapType;
           if (data.customMapData) {
-            room.customMapData = data.customMapData;
-            CustomMapManager.registerMap(data.customMapData);
+            const sanitized = CustomMapManager.sanitizeMapData(data.customMapData);
+            if (sanitized) {
+              room.customMapData = sanitized;
+              CustomMapManager.registerMap(sanitized);
+            }
           }
           console.log(`Room ${roomId} settings updated: worms=${room.wormsPerTeam}, map=${room.mapType}`);
           
@@ -245,8 +250,11 @@ wss.on('connection', (ws) => {
         if (room && room.status === 'ready' && ws.playerNumber === 1) {
           room.status = 'playing';
           if (data.customMapData) {
-            room.customMapData = data.customMapData;
-            CustomMapManager.registerMap(data.customMapData);
+            const sanitized = CustomMapManager.sanitizeMapData(data.customMapData);
+            if (sanitized) {
+              room.customMapData = sanitized;
+              CustomMapManager.registerMap(sanitized);
+            }
           }
           console.log(`Host starting match in room ${room.name} (${roomId})`);
           

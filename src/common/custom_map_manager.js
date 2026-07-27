@@ -19,10 +19,92 @@ export const SAMPLE_FORTRESS_MAP = {
   ]
 };
 
+export function escapeHTML(str) {
+  if (typeof str !== 'string') return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 const STORAGE_KEY = 'worms_custom_maps_v1';
 
 export class CustomMapManager {
   static inMemoryMaps = {};
+
+  static sanitizeMapData(rawMapData) {
+    if (!rawMapData || typeof rawMapData !== 'object') return null;
+
+    // 1. Sanitize Name & ID (limit length, remove dangerous chars)
+    let name = typeof rawMapData.name === 'string' ? rawMapData.name.trim() : 'Custom Map';
+    name = name.substring(0, 50).replace(/[<>\r\n]/g, '');
+    if (!name) name = 'Custom Map';
+
+    let id = typeof rawMapData.id === 'string' ? rawMapData.id.trim() : `custom:map_${Date.now()}`;
+    id = id.substring(0, 80).replace(/[^a-zA-Z0-9:_.-]/g, '');
+    if (!id.startsWith('custom:')) id = `custom:${id}`;
+
+    // 2. Base Type Whitelist
+    const allowedBases = ['island', 'cave', 'canyon', 'blank'];
+    const baseType = allowedBases.includes(rawMapData.baseType) ? rawMapData.baseType : 'island';
+
+    // 3. Circle shape sanitizer (additions & carves)
+    const sanitizeCircle = (item) => {
+      if (!item || typeof item !== 'object') return null;
+      const x = Number(item.x);
+      const y = Number(item.y);
+      const r = Number(item.r);
+      if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(r)) return null;
+      return {
+        x: Math.max(-500, Math.min(2100, Math.round(x))),
+        y: Math.max(-500, Math.min(1400, Math.round(y))),
+        r: Math.max(1, Math.min(300, Math.round(r)))
+      };
+    };
+
+    // 4. Platform shape sanitizer
+    const sanitizePlatform = (item) => {
+      if (!item || typeof item !== 'object') return null;
+      const x = Number(item.x);
+      const y = Number(item.y);
+      const w = Number(item.w);
+      const h = Number(item.h);
+      if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(w) || !Number.isFinite(h)) return null;
+      return {
+        x: Math.max(-500, Math.min(2100, Math.round(x))),
+        y: Math.max(-500, Math.min(1400, Math.round(y))),
+        w: Math.max(2, Math.min(600, Math.round(w))),
+        h: Math.max(2, Math.min(400, Math.round(h)))
+      };
+    };
+
+    // Limit maximum array items to 500 to prevent CPU/memory DoS attacks
+    const additions = Array.isArray(rawMapData.additions)
+      ? rawMapData.additions.slice(0, 500).map(sanitizeCircle).filter(Boolean)
+      : [];
+
+    const carves = Array.isArray(rawMapData.carves)
+      ? rawMapData.carves.slice(0, 500).map(sanitizeCircle).filter(Boolean)
+      : [];
+
+    const platforms = Array.isArray(rawMapData.platforms)
+      ? rawMapData.platforms.slice(0, 500).map(sanitizePlatform).filter(Boolean)
+      : [];
+
+    return {
+      id,
+      name,
+      width: 1600,
+      height: 900,
+      version: 1,
+      baseType,
+      additions,
+      carves,
+      platforms
+    };
+  }
 
   static computeChecksum(mapData) {
     if (!mapData || typeof mapData !== 'object') return '000000';
@@ -67,35 +149,33 @@ export class CustomMapManager {
   }
 
   static registerRemoteMultiplayerMap(mapData) {
-    if (!mapData || typeof mapData !== 'object' || !mapData.id) return mapData;
+    if (!mapData || typeof mapData !== 'object') return null;
+    const sanitized = this.sanitizeMapData(mapData);
+    if (!sanitized) return null;
     
-    const remoteMap = JSON.parse(JSON.stringify(mapData));
-    const checksum = this.computeChecksum(remoteMap);
-    remoteMap.checksum = checksum;
+    const checksum = this.computeChecksum(sanitized);
+    sanitized.checksum = checksum;
 
-    const existingById = this.getMapById(remoteMap.id);
+    const existingById = this.getMapById(sanitized.id);
     if (existingById) {
       const existingChecksum = this.computeChecksum(existingById);
       if (existingChecksum !== checksum) {
-        remoteMap.id = `${remoteMap.id}_${checksum}`;
+        sanitized.id = `${sanitized.id}_${checksum}`;
       }
     }
 
-    this.ensureUniqueName(remoteMap);
-    this.registerMap(remoteMap);
-    this.saveMap(remoteMap);
-    return remoteMap;
+    this.ensureUniqueName(sanitized);
+    this.registerMap(sanitized);
+    this.saveMap(sanitized);
+    return sanitized;
   }
 
   static registerMap(mapData) {
-    if (mapData && typeof mapData === 'object' && mapData.id) {
-      if (!mapData.id.startsWith('custom:')) {
-        mapData.id = `custom:${mapData.id}`;
-      }
-      this.inMemoryMaps[mapData.id] = mapData;
-      return mapData;
-    }
-    return null;
+    if (!mapData || typeof mapData !== 'object') return null;
+    const sanitized = this.sanitizeMapData(mapData);
+    if (!sanitized) return null;
+    this.inMemoryMaps[sanitized.id] = sanitized;
+    return sanitized;
   }
 
   static getCustomMaps() {
@@ -218,10 +298,7 @@ export class CustomMapManager {
       if (data && typeof data === 'object') {
         if (!data.name) data.name = 'Imported Custom Map';
         if (!data.id) data.id = `custom:imp_${Date.now()}`;
-        if (!data.id.startsWith('custom:')) data.id = `custom:${data.id}`;
-        data.width = 1600;
-        data.height = 900;
-        return data;
+        return this.sanitizeMapData(data);
       }
     } catch (e) {
       console.error('Invalid custom map JSON:', e);
