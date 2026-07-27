@@ -68,6 +68,62 @@ export class BaseProjectile {
       }
       this.vx = Math.cos(angle) * this.sheepSpeed;
       this.vy = Math.sin(angle) * this.sheepSpeed;
+    } else if (this.type === 'homing_missile') {
+      // ── Homing missile: boost upward, then home toward clicked target ──────
+      if (this.fuse === undefined) this.fuse = 10.0;
+      if (this._boostTimer === undefined) this._boostTimer = 0.6; // seconds to fly straight up
+
+      this.fuse -= dt / 60;
+      const bounds = 500;
+      if (this.fuse <= 0 || this.y < -bounds || this.x < -bounds || this.x > this.game.width + bounds) {
+        this.explode();
+        return;
+      }
+
+      if (this._boostTimer > 0) {
+        // Boost phase: steer upward at constant speed
+        this._boostTimer -= dt / 60;
+        const upAngle = -Math.PI / 2; // straight up
+        let currentAngle = Math.atan2(this.vy, this.vx);
+        let diff = upAngle - currentAngle;
+        while (diff > Math.PI) diff -= 2 * Math.PI;
+        while (diff < -Math.PI) diff += 2 * Math.PI;
+        const maxTurn = 0.12 * dt; // faster turn during boost
+        currentAngle += Math.sign(diff) * Math.min(Math.abs(diff), maxTurn);
+        this.vx = Math.cos(currentAngle) * this.homingSpeed;
+        this.vy = Math.sin(currentAngle) * this.homingSpeed;
+      } else {
+        // Homing phase: steer toward clicked target
+        let currentAngle = Math.atan2(this.vy, this.vx);
+
+        if (this.homingTargetX !== undefined && this.homingTargetY !== undefined) {
+          const dx = this.homingTargetX - this.x;
+          const dy = this.homingTargetY - this.y;
+          const desiredAngle = Math.atan2(dy, dx);
+
+          // Shortest arc rotation
+          let diff = desiredAngle - currentAngle;
+          while (diff > Math.PI) diff -= 2 * Math.PI;
+          while (diff < -Math.PI) diff += 2 * Math.PI;
+
+          // Allow player to nudge target lock
+          let nudge = 0;
+          if (this.game.activePlayerKeys) {
+            if (this.game.activePlayerKeys.ArrowLeft) nudge -= 0.02 * dt;
+            if (this.game.activePlayerKeys.ArrowRight) nudge += 0.02 * dt;
+          } else if (this.game.keys) {
+            if (this.game.keys['ArrowLeft'] || this.game.keys['KeyA']) nudge -= 0.02 * dt;
+            if (this.game.keys['ArrowRight'] || this.game.keys['KeyD']) nudge += 0.02 * dt;
+          }
+
+          const maxTurn = this.homingTurnRate * dt;
+          const steer = Math.sign(diff) * Math.min(Math.abs(diff), maxTurn) + nudge;
+          currentAngle += steer;
+        }
+
+        this.vx = Math.cos(currentAngle) * this.homingSpeed;
+        this.vy = Math.sin(currentAngle) * this.homingSpeed;
+      }
     } else {
       // Gravity
       this.vy += this.game.gravity * dt;
@@ -128,6 +184,8 @@ export class BaseProjectile {
     if (this.contactFuse) {
       for (const worm of this.game.worms) {
         if (worm.health > 0) {
+          // Homing missile should not self-detonate on the firing worm
+          if (this.type === 'homing_missile' && this.game.activeWorm && worm === this.game.activeWorm) continue;
           const dx = worm.x - this.x;
           const dy = worm.y - this.y;
           if (dx * dx + dy * dy < 144) { // 12² = 144

@@ -192,21 +192,21 @@ export class ServerGame {
     );
   }
 
-  fireActiveWeapon(vx, vy, spawnX, spawnY, clientWeaponId = null) {
+  fireActiveWeapon(vx, vy, spawnX, spawnY, clientWeaponId = null, homingTargetX, homingTargetY) {
     this.chargePower = 0;
     const team = this.teams[this.activeTeamIndex];
     let weaponId;
     
     if (clientWeaponId) {
       weaponId = clientWeaponId;
-      const idx = ['bazooka', 'grenade', 'cluster', 'holy', 'dynamite', 'airstrike', 'blowtorch', 'banana', 'baseball_bat', 'super_sheep', 'ninja_rope'].indexOf(weaponId);
+      const idx = ['bazooka', 'grenade', 'cluster', 'holy', 'dynamite', 'airstrike', 'blowtorch', 'banana', 'baseball_bat', 'super_sheep', 'ninja_rope', 'homing_missile'].indexOf(weaponId);
       if (idx !== -1) {
         team.selectedWeaponIndex = idx;
         this.selectedWeaponIndex = idx;
       }
     } else {
       this.selectedWeaponIndex = team.selectedWeaponIndex;
-      weaponId = ['bazooka', 'grenade', 'cluster', 'holy', 'dynamite', 'airstrike', 'blowtorch', 'banana', 'baseball_bat', 'super_sheep', 'ninja_rope'][this.selectedWeaponIndex];
+      weaponId = ['bazooka', 'grenade', 'cluster', 'holy', 'dynamite', 'airstrike', 'blowtorch', 'banana', 'baseball_bat', 'super_sheep', 'ninja_rope', 'homing_missile'][this.selectedWeaponIndex];
     }
     
     if (weaponId === 'ninja_rope') {
@@ -302,6 +302,12 @@ export class ServerGame {
       proj = new ServerProjectile(spawnX, spawnY, vx, vy, 'super_sheep', this);
     } else if (weaponId === 'dynamite') {
       proj = new ServerProjectile(this.activeWorm.x, this.activeWorm.y - 10, vx, vy, 'dynamite', this);
+    } else if (weaponId === 'homing_missile') {
+      proj = new ServerProjectile(spawnX, spawnY, vx, vy, 'homing_missile', this);
+      if (homingTargetX !== undefined) {
+        proj.homingTargetX = homingTargetX;
+        proj.homingTargetY = homingTargetY;
+      }
     }
     
     this.projectiles.push(proj);
@@ -486,7 +492,7 @@ export class ServerGame {
         }
 
         if (data.type === 'fire') {
-          this.fireActiveWeapon(data.vx, data.vy, data.spawnX, data.spawnY, data.weaponId);
+          this.fireActiveWeapon(data.vx, data.vy, data.spawnX, data.spawnY, data.weaponId, data.homingTargetX, data.homingTargetY);
         }
       }
     }
@@ -497,7 +503,7 @@ export class ServerGame {
       }
       if (data.type === 'fire') {
         if (worm && worm.health > 0) {
-          this.fireActiveWeapon(data.vx, data.vy, data.spawnX, data.spawnY, data.weaponId);
+          this.fireActiveWeapon(data.vx, data.vy, data.spawnX, data.spawnY, data.weaponId, data.homingTargetX, data.homingTargetY);
         }
       }
     }

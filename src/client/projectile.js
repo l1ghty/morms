@@ -25,7 +25,7 @@ export class Projectile extends BaseProjectile {
   }
 
   onFlightParticle(dt) {
-    if (this.type === 'bazooka' || this.type === 'airstrike_missile' || this.type === 'super_sheep') {
+    if (this.type === 'bazooka' || this.type === 'airstrike_missile' || this.type === 'super_sheep' || this.type === 'homing_missile') {
       if (Math.random() < 0.6 * dt) {
         this.game.particles.spawnBurst(this.x - this.vx * 0.5, this.y - this.vy * 0.5, 'smoke_trail', 1);
       }
@@ -142,6 +142,39 @@ export class Projectile extends BaseProjectile {
       ctx.moveTo(this.x - 3, this.y - this.radius - 3);
       ctx.lineTo(this.x + 3, this.y - this.radius - 3);
       ctx.stroke();
+    } else if (this.type === 'homing_missile') {
+      ctx.translate(this.x, this.y);
+      ctx.rotate(Math.atan2(this.vy, this.vx));
+
+      // Pulsing target-lock ring
+      const pulse = 0.5 + 0.5 * Math.sin(performance.now() * 0.012);
+      ctx.strokeStyle = `rgba(255, ${Math.round(50 + 180 * pulse)}, 0, ${0.5 + 0.5 * pulse})`;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(0, 0, 10 + pulse * 4, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Nose cone — hot orange
+      ctx.fillStyle = '#f97316';
+      ctx.beginPath();
+      ctx.moveTo(10, 0); ctx.lineTo(4, -3); ctx.lineTo(4, 3);
+      ctx.closePath();
+      ctx.fill();
+
+      // Body — teal
+      ctx.fillStyle = '#0891b2';
+      ctx.fillRect(-7, -2.5, 11, 5);
+
+      // Fins — dark slate
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(-9, -4, 2.5, 8);
+
+      // Thruster glow
+      const glow = 0.6 + 0.4 * Math.sin(performance.now() * 0.02);
+      ctx.fillStyle = `rgba(251, 191, 36, ${glow})`;
+      ctx.beginPath();
+      ctx.arc(-9, 0, 3 * glow, 0, Math.PI * 2);
+      ctx.fill();
     } else if (this.type === 'dynamite') {
       ctx.fillStyle   = '#dc2626';
       ctx.strokeStyle = '#000000';

@@ -260,6 +260,16 @@ export function setupWeaponProperties(type, selectedFuseTime) {
       props.maxDamage = 30;
       props.knockbackForce = 16.0;
       break;
+    case 'homing_missile':
+      props.radius = 3;
+      props.affectedByWind = false;
+      props.contactFuse = true;
+      props.blastRadius = 50;
+      props.maxDamage = 55;
+      props.knockbackForce = 8.5;
+      props.homingTurnRate = 0.04; // radians per frame — how sharply it can steer
+      props.homingSpeed = 7.5;     // constant flight speed
+      break;
   }
   return props;
 }

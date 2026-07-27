@@ -108,6 +108,9 @@ export class Game {
 
   selectWeapon(index, fromSync = false) {
     this.ui.selectWeapon(index, fromSync);
+    // Clear stale homing target when switching weapons
+    this.homingTargetX = undefined;
+    this.homingTargetY = undefined;
   }
 
   deductAmmo(weapon) {
@@ -599,6 +602,12 @@ export class Game {
     if (this.isOnline && !this.isLocalPlayerTurn) return;
     
     const weapon = this.WEAPONS[this.selectedWeaponIndex];
+    if (weapon.id === 'homing_missile') {
+      // Store the click point as the homing target
+      this.homingTargetX = this.mouse.canvasX;
+      this.homingTargetY = this.mouse.canvasY;
+      return;
+    }
     if (weapon.id === 'airstrike') {
       this.state = GameState.ACTION;
       const targetX = this.mouse.canvasX;
@@ -666,7 +675,9 @@ export class Game {
         vx,
         vy,
         chargePower: this.chargePower,
-        selectedFuseTime: this.selectedFuseTime
+        selectedFuseTime: this.selectedFuseTime,
+        homingTargetX: this.homingTargetX,
+        homingTargetY: this.homingTargetY
       });
     }
     
@@ -675,6 +686,8 @@ export class Game {
         this.audio.play('shoot_bazooka');
       } else if (['grenade', 'cluster', 'holy', 'banana', 'super_sheep'].includes(weapon.id)) {
         this.audio.play('shoot_grenade');
+      } else if (weapon.id === 'homing_missile') {
+        this.audio.play('shoot_bazooka');
       } else if (weapon.id === 'baseball_bat') {
         this.audio.play('shoot_bazooka');
         let targetWorm = null;
@@ -756,6 +769,19 @@ export class Game {
       this.camera.target = proj;
       this.deductAmmo(weapon);
       this.state = GameState.ACTION;
+    }
+    else if (weapon.id === 'homing_missile') {
+      this.audio.play('shoot_bazooka');
+      const proj = new Projectile(spawnX, spawnY, vx, vy, 'homing_missile', this);
+      // Pass player-clicked target into the projectile
+      if (this.homingTargetX !== undefined) {
+        proj.homingTargetX = this.homingTargetX;
+        proj.homingTargetY = this.homingTargetY;
+      }
+      this.projectiles.push(proj);
+      this.camera.target = proj;
+      this.deductAmmo(weapon);
+      this.startRetreat(RETREAT_DURATION_LONG);
     }
     else if (weapon.id === 'baseball_bat') {
       this.audio.play('shoot_bazooka');
@@ -955,7 +981,7 @@ export class Game {
           }
         }
         
-        if (p.type === 'bazooka' || p.type === 'airstrike_missile') {
+        if (p.type === 'bazooka' || p.type === 'airstrike_missile' || p.type === 'homing_missile') {
           if (Math.random() < 0.6 * dt) {
             this.particles.spawnBurst(p.x - p.vx * 0.5, p.y - p.vy * 0.5, 'smoke_trail', 1);
           }
@@ -997,8 +1023,10 @@ export class Game {
       });
 
       const hasSuperSheep = this.projectiles.some(p => p.type === 'super_sheep' && !p.isDead);
+      const hasHomingMissile = this.projectiles.some(p => p.type === 'homing_missile' && !p.isDead);
       const isSuperSheepFlying = this.state === GameState.ACTION && hasSuperSheep;
-      if (this.isLocalPlayerTurn && (this.state === GameState.PLAYING || this.state === GameState.RETREAT || isSuperSheepFlying)) {
+      const isHomingMissileFlying = this.state === GameState.ACTION && hasHomingMissile;
+      if (this.isLocalPlayerTurn && (this.state === GameState.PLAYING || this.state === GameState.RETREAT || isSuperSheepFlying || isHomingMissileFlying)) {
         this.handlePlayingInput(dt);
         this.mp.send({
           type: 'input',
@@ -1332,7 +1360,55 @@ export class Game {
     if (this.state !== GameState.PLAYING) return;
     
     const weapon = this.WEAPONS[this.selectedWeaponIndex];
-    if (weapon.id === 'airstrike') {
+    if (weapon.id === 'homing_missile') {
+      const tx = this.homingTargetX;
+      const ty = this.homingTargetY;
+      const mx = this.mouse.canvasX;
+      const my = this.mouse.canvasY;
+      const now = performance.now();
+
+      // Dashed line from active worm to current locked target
+      if (tx !== undefined && this.activeWorm) {
+        this.ctx.strokeStyle = 'rgba(8, 145, 178, 0.5)';
+        this.ctx.lineWidth = 1.5;
+        this.ctx.setLineDash([6, 5]);
+        this.ctx.beginPath();
+        this.ctx.moveTo(this.activeWorm.x, this.activeWorm.y);
+        this.ctx.lineTo(tx, ty);
+        this.ctx.stroke();
+        this.ctx.setLineDash([]);
+
+        // Locked target crosshair (teal, pulsing)
+        const pulse = 0.5 + 0.5 * Math.sin(now * 0.008);
+        const lockR = 14 + pulse * 4;
+        this.ctx.strokeStyle = `rgba(8, 145, 178, ${0.6 + 0.4 * pulse})`;
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        this.ctx.arc(tx, ty, lockR, 0, Math.PI * 2);
+        this.ctx.stroke();
+        // Cross hairs
+        this.ctx.beginPath();
+        this.ctx.moveTo(tx - lockR - 6, ty); this.ctx.lineTo(tx + lockR + 6, ty);
+        this.ctx.moveTo(tx, ty - lockR - 6); this.ctx.lineTo(tx, ty + lockR + 6);
+        this.ctx.stroke();
+      }
+
+      // Mouse hover crosshair (dimmer, shows where a click would set the target)
+      const hoverR = 12;
+      const hoverAlpha = 0.35;
+      this.ctx.strokeStyle = `rgba(251, 191, 36, ${hoverAlpha})`;
+      this.ctx.lineWidth = 1.5;
+      this.ctx.setLineDash([4, 4]);
+      this.ctx.beginPath();
+      this.ctx.arc(mx, my, hoverR, 0, Math.PI * 2);
+      this.ctx.stroke();
+      this.ctx.setLineDash([]);
+      this.ctx.beginPath();
+      this.ctx.moveTo(mx - hoverR - 5, my); this.ctx.lineTo(mx + hoverR + 5, my);
+      this.ctx.moveTo(mx, my - hoverR - 5); this.ctx.lineTo(mx, my + hoverR + 5);
+      this.ctx.stroke();
+
+    } else if (weapon.id === 'airstrike') {
       const targetX = this.mouse.canvasX;
       this.ctx.strokeStyle = 'rgba(239, 68, 68, 0.4)';
       this.ctx.lineWidth = 1.5;

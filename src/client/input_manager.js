@@ -188,9 +188,10 @@ export class InputManager {
         if (this.isDragging || Math.hypot(dx, dy) > 5) {
           const activeW = this.game.WEAPONS[this.game.selectedWeaponIndex];
           const isAirstrike = activeW && activeW.id === 'airstrike';
+          const isHomingMissile = activeW && activeW.id === 'homing_missile';
           
-          // Pan on middle (1), right (2), or left (0) when not targeting an airstrike
-          const canPan = this.dragButton === 1 || this.dragButton === 2 || (this.dragButton === 0 && !isAirstrike);
+          // Pan on middle (1), right (2), or left (0) when not targeting an airstrike or homing missile
+          const canPan = this.dragButton === 1 || this.dragButton === 2 || (this.dragButton === 0 && !isAirstrike && !isHomingMissile);
           
           if (canPan) {
             this.isDragging = true;
@@ -498,7 +499,7 @@ export class InputManager {
         }
         
         if (this.game.state !== GameState.PLAYING) return;
-        if (weapon.id === 'airstrike') return; // Targeted on canvas click
+        if (weapon.id === 'airstrike' || weapon.id === 'homing_missile') return; // Targeted on canvas click
         
         if (weapon.id === 'ninja_rope') {
           this.game.fireActiveWeapon();

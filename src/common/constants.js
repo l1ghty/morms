@@ -58,6 +58,7 @@ export const WEAPONS = [
   { id: 'banana',    name: 'Banana Bomb',   ammo:  2, icon: '🍌', desc: 'Wildly bouncy banana. Explodes into 5 bouncing bananas!' },
   { id: 'baseball_bat', name: 'Baseball Bat', ammo: 2, icon: '🏏', desc: 'Whack a nearby worm to launch them into orbit!' },
   { id: 'super_sheep', name: 'Super Sheep',  ammo:  2, icon: '🐑', desc: 'Controllable/manual detonation flying sheep!' },
-  { id: 'ninja_rope',  name: 'Ninja Rope',   ammo: -1, icon: '🪢', desc: 'Hook onto terrain! Aim with Up/Down, Space/Click to shoot rope. Swing A/D, change length W/S, Jump or Space to release.' }
+  { id: 'ninja_rope',  name: 'Ninja Rope',   ammo: -1, icon: '🪢', desc: 'Hook onto terrain! Aim with Up/Down, Space/Click to shoot rope. Swing A/D, change length W/S, Jump or Space to release.' },
+  { id: 'homing_missile', name: 'Homing Missile', ammo: 2, icon: '🎯', desc: 'Click anywhere to set a target, then fire! The missile steers toward your chosen point. Nudge aim with Left/Right.' }
 ];
 
