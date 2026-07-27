@@ -43,6 +43,27 @@ export class UIManager {
       `;
       if (currentVal) select.value = currentVal;
     });
+
+    this.updateDeleteMapButtonsVisibility();
+  }
+
+  updateDeleteMapButtonsVisibility() {
+    const pairs = [
+      { selectId: 'map-type-select', btnId: 'delete-selected-map-btn' },
+      { selectId: 'lobby-map-type-select', btnId: 'delete-lobby-map-btn' }
+    ];
+    pairs.forEach(({ selectId, btnId }) => {
+      const select = document.getElementById(selectId);
+      const btn = document.getElementById(btnId);
+      if (!select || !btn) return;
+      const val = select.value;
+      const isRemovableCustomMap = val && val.startsWith('custom:') && val !== 'custom:sample_fortress';
+      if (isRemovableCustomMap) {
+        btn.classList.remove('hidden');
+      } else {
+        btn.classList.add('hidden');
+      }
+    });
   }
 
   // Populate HTML weapon grid

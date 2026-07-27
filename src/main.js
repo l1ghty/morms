@@ -96,7 +96,46 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   
   if (lobbyWormCount) lobbyWormCount.addEventListener('change', sendLobbySettingsUpdate);
-  if (lobbyMapType) lobbyMapType.addEventListener('change', sendLobbySettingsUpdate);
+  if (lobbyMapType) {
+    lobbyMapType.addEventListener('change', () => {
+      sendLobbySettingsUpdate();
+      if (game && game.ui) game.ui.updateDeleteMapButtonsVisibility();
+    });
+  }
+
+  const mapTypeSelect = document.getElementById('map-type-select');
+  if (mapTypeSelect) {
+    mapTypeSelect.addEventListener('change', () => {
+      if (game && game.ui) game.ui.updateDeleteMapButtonsVisibility();
+    });
+  }
+
+  // Delete Map button listeners on Main Menu & Lobby
+  ['delete-selected-map-btn', 'delete-lobby-map-btn'].forEach(btnId => {
+    const deleteBtn = document.getElementById(btnId);
+    if (!deleteBtn) return;
+    deleteBtn.addEventListener('click', () => {
+      const selectId = btnId === 'delete-selected-map-btn' ? 'map-type-select' : 'lobby-map-type-select';
+      const select = document.getElementById(selectId);
+      if (!select) return;
+      
+      const mapId = select.value;
+      const mapObj = CustomMapManager.getMapById(mapId);
+      if (!mapObj) return;
+
+      if (confirm(`Are you sure you want to remove map "${mapObj.name}"?`)) {
+        CustomMapManager.deleteMap(mapId);
+        if (game && game.ui) game.ui.populateMapSelects();
+        if (window.mapEditor) window.mapEditor.populateSavedMapsDropdown();
+        
+        select.value = 'island';
+        if (selectId === 'lobby-map-type-select') {
+          sendLobbySettingsUpdate();
+        }
+        if (game && game.ui) game.ui.updateDeleteMapButtonsVisibility();
+      }
+    });
+  });
 
   // Hook up Touch Controls toggle settings change
   const touchControlsToggle = document.getElementById('mobile-controls-toggle');

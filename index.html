@@ -164,11 +164,14 @@
               </div>
               <div class="option-item">
                 <label for="map-type-select">Terrain Type</label>
-                <select id="map-type-select">
-                  <option value="island" selected>Procedural Island</option>
-                  <option value="cave">Procedural Cave</option>
-                  <option value="canyon">Procedural Canyon</option>
-                </select>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                  <select id="map-type-select" style="flex: 1;">
+                    <option value="island" selected>Procedural Island</option>
+                    <option value="cave">Procedural Cave</option>
+                    <option value="canyon">Procedural Canyon</option>
+                  </select>
+                  <button type="button" id="delete-selected-map-btn" class="btn btn-secondary hidden" style="padding: 6px 10px; font-size: 0.85rem; color: #f87171; border-color: rgba(239, 68, 68, 0.4);" title="Remove selected custom map">🗑️</button>
+                </div>
               </div>
               <div class="option-item" style="grid-column: span 2;">
                 <label for="player-name-input">Your Team Name</label>
@@ -384,15 +387,18 @@
                     <option value="4">4 Morms</option>
                   </select>
                 </div>
-                <div class="option-item" style="max-width: 150px;">
+                <div class="option-item" style="max-width: 180px;">
                   <label for="lobby-map-type-select"
                     style="font-size: 0.75rem; color: rgba(255,255,255,0.7); margin-bottom: 2px;">Terrain Type</label>
-                  <select id="lobby-map-type-select"
-                    style="padding: 4px 8px; font-size: 0.8rem; background: rgba(15, 23, 42, 0.9); border-radius: 6px; border: 1px solid rgba(255,255,255,0.15); color: #fff; outline: none; cursor: pointer;">
-                    <option value="island" selected>Procedural Island</option>
-                    <option value="cave">Procedural Cave</option>
-                    <option value="canyon">Procedural Canyon</option>
-                  </select>
+                  <div style="display: flex; gap: 4px; align-items: center;">
+                    <select id="lobby-map-type-select"
+                      style="padding: 4px 8px; font-size: 0.8rem; background: rgba(15, 23, 42, 0.9); border-radius: 6px; border: 1px solid rgba(255,255,255,0.15); color: #fff; outline: none; cursor: pointer; flex: 1;">
+                      <option value="island" selected>Procedural Island</option>
+                      <option value="cave">Procedural Cave</option>
+                      <option value="canyon">Procedural Canyon</option>
+                    </select>
+                    <button type="button" id="delete-lobby-map-btn" class="btn btn-secondary hidden" style="padding: 4px 6px; font-size: 0.75rem; color: #f87171; border-color: rgba(239,68,68,0.4);" title="Remove custom map">🗑️</button>
+                  </div>
                 </div>
               </div>
               <button id="host-start-match-btn" class="btn btn-primary hidden"
