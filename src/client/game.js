@@ -126,7 +126,14 @@ export class Game {
     this.ui.togglePauseMenu(forceState);
   }
 
-  returnToEditor() {
+  returnToEditor(skipConfirm = false) {
+    const isGameActive = (this.state !== GameState.LOBBY && this.state !== GameState.GAME_OVER);
+    if (isGameActive && !skipConfirm) {
+      if (!confirm('Are you sure you want to exit the current test match and return to the Map Editor?')) {
+        return;
+      }
+    }
+
     if (this.timerInterval) clearInterval(this.timerInterval);
     const hud = document.getElementById('game-hud');
     const gameOverScreen = document.getElementById('game-over-screen');
@@ -147,7 +154,14 @@ export class Game {
     }
   }
 
-  returnToMainMenu() {
+  returnToMainMenu(skipConfirm = false) {
+    const isGameActive = (this.state !== GameState.LOBBY && this.state !== GameState.GAME_OVER);
+    if (isGameActive && !skipConfirm) {
+      if (!confirm('Are you sure you want to exit the match and return to the Main Menu?')) {
+        return;
+      }
+    }
+
     if (this.timerInterval) clearInterval(this.timerInterval);
     const wasOnline = this.isOnline;
     if (wasOnline) {

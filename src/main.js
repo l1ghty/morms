@@ -46,21 +46,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Hook up Main Menu Button
+  // Hook up Main Menu Button (Game Over Screen)
   const mainMenuBtn = document.getElementById('main-menu-btn');
   if (mainMenuBtn) {
     mainMenuBtn.addEventListener('click', () => {
-      const wasOnline = game && game.isOnline;
       if (game) {
-        if (wasOnline) {
-          game.mp.send({ type: 'return_to_lobby' });
-        } else {
-          document.getElementById('game-over-screen').classList.add('hidden');
-          document.getElementById('game-hud').classList.add('hidden');
-          game.disconnectOnline();
-          game.state = 'LOBBY';
-          document.getElementById('start-screen').classList.remove('hidden');
-        }
+        game.returnToMainMenu(true);
       }
     });
   }
@@ -348,7 +339,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const gameOverEditorBtn = document.getElementById('game-over-editor-btn');
   if (gameOverEditorBtn) {
     gameOverEditorBtn.addEventListener('click', () => {
-      game.returnToEditor();
+      game.returnToEditor(true);
     });
   }
 
