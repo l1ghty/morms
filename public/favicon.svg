@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="wormGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffb3c1"/>
+      <stop offset="100%" stop-color="#ff8fa3"/>
+    </linearGradient>
+    <linearGradient id="rocketGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ef4444"/>
+      <stop offset="100%" stop-color="#dc2626"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background Container -->
+  <rect width="64" height="64" rx="16" fill="url(#bgGrad)"/>
+  <rect width="60" height="60" x="2" y="2" rx="14" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+
+  <!-- Worm Body -->
+  <path d="M 22 24 C 22 14, 42 14, 42 24 L 42 46 C 42 53, 22 53, 22 46 Z" fill="url(#wormGrad)" stroke="#e11d48" stroke-width="1.5"/>
+  
+  <!-- Red Team Headband -->
+  <rect x="21" y="22" width="22" height="6" rx="2" fill="#ef4444"/>
+  <circle cx="19" cy="25" r="2.5" fill="#ef4444"/>
+  <path d="M 19 25 L 14 29 M 19 25 L 15 32" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Eyes -->
+  <circle cx="37" cy="33" r="4.5" fill="#ffffff"/>
+  <circle cx="38" cy="33" r="2.2" fill="#0f172a"/>
+  <circle cx="39.2" cy="31.8" r="0.9" fill="#ffffff"/>
+
+  <!-- Smile -->
+  <path d="M 33 40 Q 37 43 40 39" fill="none" stroke="#be123c" stroke-width="1.8" stroke-linecap="round"/>
+
+  <!-- Mini Rocket -->
+  <g transform="translate(11, 35) rotate(-35)">
+    <rect x="0" y="0" width="10" height="5" rx="1" fill="#f8fafc"/>
+    <path d="M 10 -1 L 15 2.5 L 10 6 Z" fill="url(#rocketGrad)"/>
+    <rect x="-3" y="-1.5" width="3" height="8" rx="1" fill="#64748b"/>
+  </g>
+</svg>

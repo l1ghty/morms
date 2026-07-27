@@ -92,7 +92,7 @@ export class BaseWorm {
       this.y += this.vy * dt;
     }
 
-    this.resolveTerrainCollision(dt);
+    this.resolveTerrainCollision();
   }
 
   fireRope() {
@@ -173,7 +173,7 @@ export class BaseWorm {
     }
   }
 
-  resolveTerrainCollision(dt) {
+  resolveTerrainCollision() {
     resolveWormCollision(
       this,
       this.game.terrain,

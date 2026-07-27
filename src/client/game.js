@@ -67,7 +67,6 @@ export class Game {
     this.totalDamageDealt = 0;
     this.wormsDrowned = 0;
     this.turnsPlayed = 0;
-    this.cameraLocked = false;
     this.selectedFuseTime = DEFAULT_FUSE_TIME;
     
     // Online Multiplayer properties
@@ -429,19 +428,6 @@ export class Game {
     this.state = GameState.LOBBY;
   }
 
-  sendWormSync() {
-    if (!this.activeWorm) return;
-    this.mp.send({
-      type: 'sync_worm',
-      x: this.activeWorm.x,
-      y: this.activeWorm.y,
-      vx: this.activeWorm.vx,
-      vy: this.activeWorm.vy,
-      facingDir: this.activeWorm.facingDir,
-      aimAngle: this.activeWorm.aimAngle
-    });
-  }
-
   carveTerrain(x, y, radius) {
     if (this.terrain) {
       this.terrain.carve(x, y, radius);
@@ -517,7 +503,6 @@ export class Game {
     if (this.isOnline && !this.isLocalPlayerTurn && !fromSync) return;
     
     if (this.isOnline && this.isLocalPlayerTurn && !fromSync) {
-      this.handoverConfirm = false;
       this.mp.send({ type: 'confirm_start' });
       const startBtn = document.getElementById('handover-start-btn');
       if (startBtn) {
@@ -526,7 +511,6 @@ export class Game {
       return;
     }
     
-    this.handoverConfirm = false;
     this.ui.hideHandover();
     this.camera.target = null;
     this.camera.manual = false;
@@ -854,10 +838,6 @@ export class Game {
         worm.y += (Math.sin(worm.aimAngle)) * 1.2;
         worm.vy = 0;
         
-        if (this.isOnline && this.isLocalPlayerTurn) {
-          this.sendWormSync();
-        }
-        
         step++;
       }, 80);
       
@@ -935,7 +915,7 @@ export class Game {
 
   update(dt) {
     this.updateCamera(dt);
-    this.particles.update(dt, this.terrain);
+    this.particles.update(dt);
     
     if (this.isOnline) {
       this.projectiles.forEach(p => {
