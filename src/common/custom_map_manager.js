@@ -19,6 +19,8 @@ export const SAMPLE_FORTRESS_MAP = {
   ]
 };
 
+export const MAX_MAP_SIZE_BYTES = 100 * 1024; // 100 KB limit per custom map
+
 export function escapeHTML(str) {
   if (typeof str !== 'string') return '';
   return str
@@ -33,6 +35,21 @@ const STORAGE_KEY = 'worms_custom_maps_v1';
 
 export class CustomMapManager {
   static inMemoryMaps = {};
+
+  static getMapByteSize(mapDataOrJson) {
+    try {
+      const jsonStr = typeof mapDataOrJson === 'string'
+        ? mapDataOrJson
+        : JSON.stringify(mapDataOrJson);
+      return new TextEncoder().encode(jsonStr).length;
+    } catch (e) {
+      return Infinity;
+    }
+  }
+
+  static isWithinSizeLimit(mapDataOrJson) {
+    return this.getMapByteSize(mapDataOrJson) <= MAX_MAP_SIZE_BYTES;
+  }
 
   static sanitizeMapData(rawMapData) {
     if (!rawMapData || typeof rawMapData !== 'object') return null;
@@ -93,7 +110,7 @@ export class CustomMapManager {
       ? rawMapData.platforms.slice(0, 500).map(sanitizePlatform).filter(Boolean)
       : [];
 
-    return {
+    let sanitized = {
       id,
       name,
       width: 1600,
@@ -104,6 +121,21 @@ export class CustomMapManager {
       carves,
       platforms
     };
+
+    // Enforce 100 KB payload size limit by trimming extra shapes if necessary
+    while (this.getMapByteSize(sanitized) > MAX_MAP_SIZE_BYTES) {
+      if (sanitized.additions.length > 20) {
+        sanitized.additions.pop();
+      } else if (sanitized.carves.length > 20) {
+        sanitized.carves.pop();
+      } else if (sanitized.platforms.length > 5) {
+        sanitized.platforms.pop();
+      } else {
+        break;
+      }
+    }
+
+    return sanitized;
   }
 
   static computeChecksum(mapData) {
@@ -293,6 +325,13 @@ export class CustomMapManager {
   }
 
   static parseMapJSON(jsonText) {
+    if (typeof jsonText === 'string' && new TextEncoder().encode(jsonText).length > MAX_MAP_SIZE_BYTES * 2) {
+      console.warn('Imported map JSON file exceeds max payload limit (100 KB).');
+      if (typeof alert !== 'undefined') {
+        alert('File size exceeds the 100 KB limit for custom maps.');
+      }
+      return null;
+    }
     try {
       const data = JSON.parse(jsonText);
       if (data && typeof data === 'object') {
