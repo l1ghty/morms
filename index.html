@@ -25,8 +25,14 @@
 
       <!-- Fullscreen Toggle Button -->
       <button id="btn-fullscreen" class="btn-fullscreen" title="Toggle Fullscreen">
-        <svg class="icon-enter" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-        <svg class="icon-exit hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6m10-6h-6v6M4 10h6V4m10 6h-6V4"/></svg>
+        <svg class="icon-enter" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+        </svg>
+        <svg class="icon-exit hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 14h6v6m10-6h-6v6M4 10h6V4m10 6h-6V4" />
+        </svg>
       </button>
 
 
@@ -74,7 +80,8 @@
           </div>
 
           <!-- Pause / Match Menu Button -->
-          <div class="hud-panel menu-panel" id="ingame-menu-btn" title="Open Pause / Match Menu (or press Esc)" style="cursor: pointer; pointer-events: auto;">
+          <div class="hud-panel menu-panel" id="ingame-menu-btn" title="Open Pause / Match Menu (or press Esc)"
+            style="cursor: pointer; pointer-events: auto;">
             <span class="hud-label">MATCH</span>
             <span style="font-weight: 700; font-size: 0.9rem; color: #fff;">⚙️ Menu</span>
           </div>
@@ -133,7 +140,7 @@
             <button class="dpad-btn dpad-down" id="btn-dpad-down">▼</button>
             <div class="dpad-center"></div>
           </div>
-          
+
           <!-- Right Action Controls -->
           <div class="mobile-actions-container">
             <button class="action-btn btn-mobile-secondary btn-mobile-fuse hidden" id="btn-mobile-fuse">⏱️ 3s</button>
@@ -170,7 +177,9 @@
                     <option value="cave">Procedural Cave</option>
                     <option value="canyon">Procedural Canyon</option>
                   </select>
-                  <button type="button" id="delete-selected-map-btn" class="btn btn-secondary hidden" style="padding: 6px 10px; font-size: 0.85rem; color: #f87171; border-color: rgba(239, 68, 68, 0.4);" title="Remove selected custom map">🗑️</button>
+                  <button type="button" id="delete-selected-map-btn" class="btn btn-secondary hidden"
+                    style="padding: 6px 10px; font-size: 0.85rem; color: #f87171; border-color: rgba(239, 68, 68, 0.4);"
+                    title="Remove selected custom map">🗑️</button>
                 </div>
               </div>
               <div class="option-item" style="grid-column: span 2;">
@@ -180,7 +189,8 @@
               </div>
               <div class="option-item" style="grid-column: span 2;">
                 <label for="mobile-controls-toggle">Touch Controls</label>
-                <select id="mobile-controls-toggle" style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-primary); border-radius: 8px; padding: 8px 12px; font-size: 0.9rem; font-family: var(--font-ui); outline: none; cursor: pointer; width: 100%;">
+                <select id="mobile-controls-toggle"
+                  style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-primary); border-radius: 8px; padding: 8px 12px; font-size: 0.9rem; font-family: var(--font-ui); outline: none; cursor: pointer; width: 100%;">
                   <option value="auto" selected>Auto Detect</option>
                   <option value="on">Always On</option>
                   <option value="off">Always Off</option>
@@ -195,7 +205,8 @@
                   <button type="button" class="mode-btn btn-primary-style" data-mode="online">Online
                     Multiplayer</button>
                   <button type="button" id="open-map-editor-btn" class="mode-btn btn-primary-style"
-                    style="background: rgba(147, 51, 234, 0.35); border-color: rgba(168, 85, 247, 0.6); text-shadow: 0 0 8px rgba(192, 132, 252, 0.5);">🎨 Map Editor</button>
+                    style="background: rgba(147, 51, 234, 0.35); border-color: rgba(168, 85, 247, 0.6); text-shadow: 0 0 8px rgba(192, 132, 252, 0.5);">🎨
+                    Map Editor</button>
                 </div>
               </div>
             </div>
@@ -222,12 +233,15 @@
       <div id="map-editor-screen" class="editor-overlay hidden">
         <div class="editor-header">
           <div class="editor-header-left">
-            <button id="editor-back-btn" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.85rem;">◀ Main Menu</button>
+            <button id="editor-back-btn" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.85rem;">◀ Main
+              Menu</button>
             <select id="editor-load-map-select" class="editor-select" style="max-width: 170px;">
               <option value="">-- Load Saved Map --</option>
             </select>
-            <button id="editor-new-btn" class="btn btn-secondary" style="padding: 6px 10px; font-size: 0.85rem;" title="Create New Map">➕ New</button>
-            <input type="text" id="editor-map-name" class="editor-title-input" value="Custom Fortress" placeholder="Map Name">
+            <button id="editor-new-btn" class="btn btn-secondary" style="padding: 6px 10px; font-size: 0.85rem;"
+              title="Create New Map">➕ New</button>
+            <input type="text" id="editor-map-name" class="editor-title-input" value="Custom Fortress"
+              placeholder="Map Name">
             <select id="editor-template-select" class="editor-select">
               <option value="island" selected>Base: Island</option>
               <option value="cave">Base: Cave</option>
@@ -236,12 +250,20 @@
             </select>
           </div>
           <div class="editor-header-right">
-            <button id="editor-delete-btn" class="btn btn-secondary hidden" style="padding: 6px 10px; font-size: 0.85rem; color: #f87171; border-color: rgba(239,68,68,0.4);" title="Delete Map">🗑️ Delete</button>
-            <button id="editor-save-btn" class="btn btn-primary" style="padding: 6px 14px; font-size: 0.85rem; background: #059669; border-color: #10b981;">💾 Save Map</button>
-            <button id="editor-export-btn" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.85rem;">📥 Export JSON</button>
-            <label for="editor-import-input" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.85rem; cursor: pointer; margin: 0;">📤 Import JSON</label>
+            <button id="editor-delete-btn" class="btn btn-secondary hidden"
+              style="padding: 6px 10px; font-size: 0.85rem; color: #f87171; border-color: rgba(239,68,68,0.4);"
+              title="Delete Map">🗑️ Delete</button>
+            <button id="editor-save-btn" class="btn btn-primary"
+              style="padding: 6px 14px; font-size: 0.85rem; background: #059669; border-color: #10b981;">💾 Save
+              Map</button>
+            <button id="editor-export-btn" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.85rem;">📥
+              Export JSON</button>
+            <label for="editor-import-input" class="btn btn-secondary"
+              style="padding: 6px 12px; font-size: 0.85rem; cursor: pointer; margin: 0;">📤 Import JSON</label>
             <input type="file" id="editor-import-input" accept=".json" style="display: none;">
-            <button id="editor-play-btn" class="btn btn-primary" style="padding: 6px 16px; font-size: 0.85rem; background: #2563eb; border-color: #3b82f6;">▶️ Play Map</button>
+            <button id="editor-play-btn" class="btn btn-primary"
+              style="padding: 6px 16px; font-size: 0.85rem; background: #2563eb; border-color: #3b82f6;">▶️ Play
+              Map</button>
           </div>
         </div>
 
@@ -265,7 +287,9 @@
               <button class="brush-size-btn" data-size="100">XL</button>
             </div>
             <div class="toolbar-divider"></div>
-            <button id="editor-reset-btn" class="editor-tool-btn" style="color: #f87171; border-color: rgba(239, 68, 68, 0.4);" title="Reset to base template">🔄 Reset</button>
+            <button id="editor-reset-btn" class="editor-tool-btn"
+              style="color: #f87171; border-color: rgba(239, 68, 68, 0.4);" title="Reset to base template">🔄
+              Reset</button>
           </div>
         </div>
       </div>
@@ -292,7 +316,8 @@
           </div>
           <div style="display: flex; gap: 12px; justify-content: center; align-items: center;">
             <button id="handover-start-btn" class="btn btn-primary">Start Turn</button>
-            <button id="handover-exit-btn" class="btn btn-secondary" style="padding: 10px 18px; font-size: 0.9rem;">Exit Match</button>
+            <button id="handover-exit-btn" class="btn btn-secondary" style="padding: 10px 18px; font-size: 0.9rem;">Exit
+              Match</button>
           </div>
         </div>
       </div>
@@ -304,7 +329,9 @@
           <p class="subtitle" style="margin-bottom: 20px;">Game Paused</p>
           <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
             <button id="pause-resume-btn" class="btn btn-primary">Resume Game</button>
-            <button id="pause-editor-btn" class="btn btn-primary hidden" style="background: rgba(147, 51, 234, 0.75); border-color: rgba(168, 85, 247, 0.8);">🎨 Return to Map Editor</button>
+            <button id="pause-editor-btn" class="btn btn-primary hidden"
+              style="background: rgba(147, 51, 234, 0.75); border-color: rgba(168, 85, 247, 0.8);">🎨 Return to Map
+              Editor</button>
             <button id="pause-main-menu-btn" class="btn btn-secondary">🏠 Main Menu</button>
           </div>
         </div>
@@ -335,7 +362,9 @@
           </div>
 
           <div style="display: flex; gap: 12px; justify-content: center; width: 100%; margin-top: 16px;">
-            <button id="game-over-editor-btn" class="btn btn-primary hidden" style="background: rgba(147, 51, 234, 0.75); border-color: rgba(168, 85, 247, 0.8);">🎨 Return to Editor</button>
+            <button id="game-over-editor-btn" class="btn btn-primary hidden"
+              style="background: rgba(147, 51, 234, 0.75); border-color: rgba(168, 85, 247, 0.8);">🎨 Return to
+              Editor</button>
             <button id="main-menu-btn" class="btn btn-primary">Main Menu</button>
           </div>
         </div>
@@ -397,7 +426,9 @@
                       <option value="cave">Procedural Cave</option>
                       <option value="canyon">Procedural Canyon</option>
                     </select>
-                    <button type="button" id="delete-lobby-map-btn" class="btn btn-secondary hidden" style="padding: 4px 6px; font-size: 0.75rem; color: #f87171; border-color: rgba(239,68,68,0.4);" title="Remove custom map">🗑️</button>
+                    <button type="button" id="delete-lobby-map-btn" class="btn btn-secondary hidden"
+                      style="padding: 4px 6px; font-size: 0.75rem; color: #f87171; border-color: rgba(239,68,68,0.4);"
+                      title="Remove custom map">🗑️</button>
                   </div>
                 </div>
               </div>
@@ -434,15 +465,26 @@
       <div id="orientation-warning" class="screen-overlay orientation-overlay hidden">
         <div class="menu-card glass-panel warning-card">
           <div class="rotate-phone-icon">
-            <svg class="phone-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+            <svg class="phone-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+              <line x1="12" y1="18" x2="12.01" y2="18" />
+            </svg>
             <div class="rotation-arrow">
-              <svg class="arrow-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+              <svg class="arrow-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+              </svg>
             </div>
           </div>
           <h2>Landscape Recommended</h2>
-          <p class="subtitle">Please rotate your device to landscape mode for the best tactical annihilation experience!</p>
+          <p class="subtitle">Please rotate your device to landscape mode for the best tactical annihilation experience!
+          </p>
           <button id="warning-exit-fullscreen-btn" class="btn btn-secondary warning-exit-fullscreen-btn hidden">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6m10-6h-6v6M4 10h6V4m10 6h-6V4"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 14h6v6m10-6h-6v6M4 10h6V4m10 6h-6V4" />
+            </svg>
             Leave Fullscreen
           </button>
         </div>

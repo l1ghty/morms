@@ -1,8 +1,45 @@
 import { Game } from './client/game.js';
 import { MapEditor } from './client/map_editor.js';
 import { CustomMapManager } from './common/custom_map_manager.js';
+import { mountDroplets } from './client/droplets.js';
 
 let game = null;
+let dropletsInstance = null;
+
+/** Mount (or re-mount) the Droplets rain effect on the main menu. */
+function initDroplets() {
+  if (dropletsInstance) {
+    dropletsInstance.destroy();
+    dropletsInstance = null;
+  }
+  const startScreen = document.getElementById('start-screen');
+  if (!startScreen) return;
+  dropletsInstance = mountDroplets(startScreen, {
+    intensity: 0.55,
+    speed: 1,
+    scale: 0.4,
+    dropWidth: 1,
+    dropLength: 1,
+    refraction: 0.2,
+    fallSpeed: 1,
+    wiggle: 1,
+    staticDrops: 0.25,
+    interactive: true,
+    interactionRadius: 0.3,
+    interactionStrength: 0.65,
+    interactionDistortion: 3,
+    tintStrength: 0,
+    tint: [0.56, 0.71, 1],
+  });
+}
+
+/** Destroy the Droplets rain effect (called when leaving the main menu). */
+function destroyDroplets() {
+  if (dropletsInstance) {
+    dropletsInstance.destroy();
+    dropletsInstance = null;
+  }
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   const canvas = document.getElementById('game-canvas');
@@ -19,6 +56,23 @@ document.addEventListener('DOMContentLoaded', () => {
   mapEditor.init();
   window.mapEditor = mapEditor;
 
+  // Mount Droplets rain effect on the main menu
+  initDroplets();
+
+  // Automatically re-mount Droplets whenever the start screen becomes visible
+  // (covers returnToMainMenu from game.js and any other code path)
+  const startScreenEl = document.getElementById('start-screen');
+  if (startScreenEl) {
+    new MutationObserver(() => {
+      const isVisible = !startScreenEl.classList.contains('hidden');
+      if (isVisible && !dropletsInstance) {
+        initDroplets();
+      } else if (!isVisible && dropletsInstance) {
+        destroyDroplets();
+      }
+    }).observe(startScreenEl, { attributes: true, attributeFilter: ['class'] });
+  }
+
   // Mode buttons selector
   const modeButtons = document.querySelectorAll('.mode-btn[data-mode]');
   modeButtons.forEach(btn => {
@@ -34,11 +88,13 @@ document.addEventListener('DOMContentLoaded', () => {
       };
       
       if (mode === 'online') {
+        destroyDroplets();
         document.getElementById('start-screen').classList.add('hidden');
         document.getElementById('online-lobby-overlay').classList.remove('hidden');
         document.getElementById('lobby-status').textContent = 'Connecting to server...';
         game.startOnline(settings);
       } else {
+        destroyDroplets();
         document.getElementById('start-screen').classList.add('hidden');
         document.getElementById('game-hud').classList.remove('hidden');
         game.start(settings);
@@ -62,6 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
     cancelMatchmakingBtn.addEventListener('click', () => {
       document.getElementById('online-lobby-overlay').classList.add('hidden');
       document.getElementById('start-screen').classList.remove('hidden');
+      initDroplets();
       game.cancelOnline();
     });
   }
@@ -162,6 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
         game.startOnline(game.settings);
       } else {
         document.getElementById('start-screen').classList.remove('hidden');
+        initDroplets();
         game.state = 'LOBBY';
       }
     });
@@ -181,6 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
     hostLeaveBtn.addEventListener('click', () => {
       document.getElementById('online-lobby-overlay').classList.add('hidden');
       document.getElementById('start-screen').classList.remove('hidden');
+      initDroplets();
       game.cancelOnline();
     });
   }
@@ -191,6 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
     guestLeaveBtn.addEventListener('click', () => {
       document.getElementById('online-lobby-overlay').classList.add('hidden');
       document.getElementById('start-screen').classList.remove('hidden');
+      initDroplets();
       game.cancelOnline();
     });
   }
@@ -264,6 +324,7 @@ document.addEventListener('DOMContentLoaded', () => {
     editorBackBtn.addEventListener('click', () => {
       document.getElementById('map-editor-screen').classList.add('hidden');
       document.getElementById('start-screen').classList.remove('hidden');
+      initDroplets();
     });
   }
 

@@ -17,6 +17,58 @@
   animation: fadeIn 0.3s ease;
 }
 
+/* Main menu gets a vivid animated gradient background */
+#start-screen {
+  background:
+    linear-gradient(135deg,
+      hsla(240, 80%, 8%, 0.92) 0%,
+      hsla(265, 70%, 12%, 0.92) 25%,
+      hsla(210, 85%, 10%, 0.92) 50%,
+      hsla(180, 75%, 8%, 0.92) 75%,
+      hsla(240, 80%, 8%, 0.92) 100%);
+  background-size: 300% 300%;
+  animation: fadeIn 0.3s ease, menuGradientShift 12s ease-in-out infinite;
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+  overflow: hidden; /* Prevent glow blobs from creating scrollbars */
+}
+
+/* Pseudo-element for the layered colorful glow blobs */
+#start-screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 55% at 20% 30%, hsla(270, 90%, 55%, 0.22) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 60% at 80% 20%, hsla(200, 100%, 60%, 0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 45% at 50% 85%, hsla(160, 80%, 50%, 0.16) 0%, transparent 65%),
+    radial-gradient(ellipse 45% 50% at 10% 80%, hsla(220, 95%, 65%, 0.14) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 40% at 90% 70%, hsla(300, 70%, 55%, 0.12) 0%, transparent 55%);
+  animation: glowPulse 8s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Ensure the menu card content sits above the pseudo-element */
+#start-screen > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes menuGradientShift {
+  0%   { background-position: 0% 0%; }
+  25%  { background-position: 100% 0%; }
+  50%  { background-position: 100% 100%; }
+  75%  { background-position: 0% 100%; }
+  100% { background-position: 0% 0%; }
+}
+
+@keyframes glowPulse {
+  0%   { opacity: 0.7; }
+  50%  { opacity: 1; }
+  100% { opacity: 0.8; }
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
