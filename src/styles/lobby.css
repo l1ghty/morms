@@ -400,31 +400,181 @@ h3 {
   transform: translateY(-1px);
 }
 
-/* Two-column grid layout for start menu on landscape mobile & small screens */
-@media (min-width: 768px) and (max-height: 600px) {
+/* ── Portrait mobile (phones up to 480px wide) ─────────────────────────── */
+@media (max-width: 480px) {
+  #start-screen {
+    padding: 10px;
+    align-items: flex-start;
+  }
+
   #start-screen .menu-card {
-    max-width: 850px;
+    width: 100%;
+    max-width: 100%;
+    padding: 16px 14px;
+    margin: auto 0;
+  }
+
+  #start-screen h1 {
+    font-size: 1.8rem;
+    margin-bottom: 12px;
+  }
+
+  #start-screen h1 .subtitle {
+    font-size: 0.75rem;
+    margin-top: 2px;
+  }
+
+  #start-screen h3 {
+    font-size: 0.75rem;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+  }
+
+  #start-screen .menu-section {
+    margin-bottom: 14px;
+  }
+
+  #start-screen .options-grid {
+    gap: 8px;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  #start-screen .option-item label {
+    font-size: 0.7rem;
+  }
+
+  #start-screen .option-item select,
+  #start-screen #player-name-input,
+  #start-screen #mobile-controls-toggle {
+    padding: 6px 8px !important;
+    font-size: 0.8rem !important;
+  }
+
+  #start-screen .mode-buttons-group {
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+
+  #start-screen .mode-btn {
+    padding: 8px 10px;
+    font-size: 0.75rem;
+    flex: 1 1 calc(50% - 4px);
+    min-width: 0;
+  }
+
+  /* Hide controls hint on small portrait — not needed to start the game */
+  #start-screen .controls-hint {
+    display: none;
+  }
+}
+
+/* ── Landscape mobile — any phone in landscape (short viewport ≤ 500px) ── */
+@media (max-height: 500px) and (orientation: landscape) {
+  #start-screen {
+    padding: 8px 12px;
+    align-items: flex-start;
+    overflow-y: auto;
+  }
+
+  #start-screen .menu-card {
+    width: 100%;
+    max-width: 860px;
+    padding: 12px 16px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    column-gap: 20px;
+    row-gap: 0;
+    text-align: left;
+  }
+
+  #start-screen h1 {
+    grid-column: span 2;
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+    text-align: center;
+    line-height: 1;
+  }
+
+  #start-screen h1 .subtitle {
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    margin-top: 2px;
+  }
+
+  #start-screen h3 {
+    font-size: 0.7rem;
+    margin-bottom: 6px;
+    padding-bottom: 3px;
+  }
+
+  #start-screen .menu-section {
+    margin-bottom: 0;
+  }
+
+  #start-screen .options-grid {
+    gap: 6px;
+  }
+
+  #start-screen .option-item label {
+    font-size: 0.68rem;
+  }
+
+  #start-screen .option-item select,
+  #start-screen #player-name-input,
+  #start-screen #mobile-controls-toggle {
+    padding: 5px 8px !important;
+    font-size: 0.75rem !important;
+  }
+
+  #start-screen .mode-buttons-group {
+    gap: 6px;
+  }
+
+  #start-screen .mode-btn {
+    padding: 7px 8px;
+    font-size: 0.72rem;
+  }
+
+  /* Hide controls hint in landscape — game already started in landscape */
+  #start-screen .controls-hint {
+    display: none;
+  }
+}
+
+/* ── Wider landscape tablets / short desktops (768px+ wide, ≤ 600px tall) ── */
+@media (min-width: 768px) and (max-height: 600px) and (orientation: landscape) {
+  #start-screen .menu-card {
+    max-width: 900px;
     display: grid;
     grid-template-columns: 1.2fr 1fr;
     column-gap: 32px;
     row-gap: 8px;
     text-align: left;
-    padding: 24px;
+    padding: 20px 24px;
   }
-  
+
   #start-screen h1 {
     grid-column: span 2;
     text-align: center;
     margin-bottom: 8px;
-    font-size: 2.2rem;
+    font-size: 2rem;
   }
-  
+
   #start-screen .menu-section {
     margin-bottom: 0;
   }
-  
+
   #start-screen .options-grid {
-    gap: 12px;
+    gap: 10px;
+  }
+
+  #start-screen .controls-hint {
+    display: block;
+  }
+
+  #start-screen .controls-hint ul {
+    max-height: 120px;
   }
 }
 
