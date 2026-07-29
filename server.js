@@ -275,7 +275,8 @@ wss.on('connection', (ws) => {
               name: w.name,
               teamName: w.teamName,
               color: w.teamColor,
-              health: w.health
+              health: w.health,
+              isGrave: w.isGrave
             }))
           });
           room.p1.send(startMsg);
@@ -311,6 +312,7 @@ wss.on('connection', (ws) => {
                   vx: w.vx,
                   vy: w.vy,
                   health: w.health,
+                  isGrave: w.isGrave,
                   facingDir: w.facingDir,
                   aimAngle: w.aimAngle,
                   isFalling: w.isFalling,

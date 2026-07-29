@@ -38,12 +38,14 @@ export class BaseWorm {
     this.isFalling = true;
     this.walkSpeed = 3.5;
     this.rope      = null; // { attached: true, x: number, y: number, length: number }
+    this.deadTimer = 0;
+    this.isGrave   = false;
   }
 
   // ─── Physics Update ─────────────────────────────────────────────────────────
 
   update(dt) {
-    if (this.health <= 0) return;
+    if (this.isGrave) return;
 
     // Drowning
     if (this.y + this.halfH >= this.game.waterLevel) {
@@ -93,6 +95,21 @@ export class BaseWorm {
     }
 
     this.resolveTerrainCollision();
+
+    // Dead body handling: wait till body slows down, then wait at least 2 seconds (120 dt units)
+    if (this.health <= 0) {
+      if (this.rope) this.detachRope();
+
+      const isBodySlowedDown = !this.isFalling && Math.abs(this.vx) < 0.05 && Math.abs(this.vy) < 0.05;
+      if (isBodySlowedDown) {
+        this.deadTimer += dt;
+        if (this.deadTimer >= 120) {
+          this.die();
+        }
+      } else {
+        this.deadTimer = 0;
+      }
+    }
   }
 
   fireRope() {
@@ -222,12 +239,16 @@ export class BaseWorm {
     this.game.totalDamageDealt += amount;
     if (this.health <= 0) {
       this.health = 0;
-      this.die();
+      this.deadTimer = 0;
+      this.isFalling = true;
+      if (this.rope) this.detachRope();
     }
   }
 
   drown() {
+    if (this.isGrave) return;
     this.health = 0;
+    this.isGrave = true;
     this.game.wormsDrowned++;
     this.playAudio('splash');
     this.onDrown();
@@ -235,6 +256,8 @@ export class BaseWorm {
   }
 
   die(drowned = false) {
+    if (this.isGrave && !drowned) return;
+    this.isGrave = true;
     if (!drowned) {
       this.playAudio('worm_die');
       this.game.carveTerrain(this.x, this.y + 4, 12);
@@ -243,7 +266,8 @@ export class BaseWorm {
   }
 
   isSettled() {
-    if (this.health <= 0) return true;
+    if (this.isGrave) return true;
+    if (this.health <= 0) return false;
     if (this.rope && this.rope.attached) return false;
     return !this.isFalling && Math.abs(this.vx) < 0.05 && Math.abs(this.vy) < 0.05;
   }

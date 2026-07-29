@@ -431,7 +431,7 @@ export class ServerGame {
           console.log(`[CLEANUP DELAY] Waiting on ${unsettledProjectiles} projectiles. Unsettled worms: ${unsettledWorms.map(w => w.name + '(vx:' + w.vx.toFixed(3) + ' vy:' + w.vy.toFixed(3) + ' fall:' + w.isFalling + ')').join(', ')}`);
         }
         
-        if (this.cleanupWaitFrames > 150 && unsettledProjectiles === 0) {
+        if (this.cleanupWaitFrames > 400 && unsettledProjectiles === 0) {
           console.log('[CLEANUP DELAY] Forcing turn end due to timeout!');
           this.cleanupWaitFrames = 0;
           this.setupNextTurn();

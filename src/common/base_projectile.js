@@ -183,7 +183,7 @@ export class BaseProjectile {
     // Direct worm contact (rockets / missiles / banana shrapnel)
     if (this.contactFuse) {
       for (const worm of this.game.worms) {
-        if (worm.health > 0) {
+        if (!worm.isGrave) {
           // Homing missile should not self-detonate on the firing worm
           if (this.type === 'homing_missile' && this.game.activeWorm && worm === this.game.activeWorm) continue;
           const dx = worm.x - this.x;
@@ -196,7 +196,7 @@ export class BaseProjectile {
       }
     } else if (this.type === 'banana_shrapnel' && !this.hasImpacted) {
       for (const worm of this.game.worms) {
-        if (worm.health > 0) {
+        if (!worm.isGrave) {
           const dx = worm.x - this.x;
           const dy = worm.y - this.y;
           if (dx * dx + dy * dy < 144) {

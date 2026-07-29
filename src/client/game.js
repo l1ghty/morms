@@ -455,21 +455,12 @@ export class Game {
         worm.aimAngle = syncW.aimAngle;
         worm.isFalling = syncW.isFalling;
         worm.health = syncW.health;
+        if (syncW.isGrave !== undefined) worm.isGrave = syncW.isGrave;
         worm.rope = syncW.rope ? { attached: syncW.rope.attached, x: syncW.rope.x, y: syncW.rope.y, length: syncW.rope.length } : null;
 
         if (prevHealth > worm.health) {
           const dmg = prevHealth - worm.health;
           this.particles.spawnText(worm.x, worm.y - 18, `-${dmg}`, '#f87171');
-        }
-
-        if (prevHealth > 0 && worm.health <= 0) {
-          const isDrowned = worm.y >= this.waterLevel;
-          if (isDrowned) {
-            this.particles.spawnBurst(worm.x, this.waterLevel, 'water', 15);
-          } else {
-            this.particles.spawnBurst(worm.x, worm.y, 'smoke', 8);
-            this.particles.spawnText(worm.x, worm.y - 10, 'RIP', '#94a3b8');
-          }
         }
 
         if (syncW.id === data.activeWormId) {
@@ -549,7 +540,8 @@ export class Game {
           y: w.y,
           vx: w.vx,
           vy: w.vy,
-          health: w.health
+          health: w.health,
+          isGrave: w.isGrave
         }))
       });
     }
@@ -1233,7 +1225,7 @@ export class Game {
         
         if (!allSettled) {
           this.cleanupWaitFrames = (this.cleanupWaitFrames || 0) + 1;
-          if (this.cleanupWaitFrames > 150 && unsettledProjectiles === 0) {
+          if (this.cleanupWaitFrames > 400 && unsettledProjectiles === 0) {
             this.cleanupWaitFrames = 0;
             this.setupNextTurn();
             return;

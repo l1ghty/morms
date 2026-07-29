@@ -338,7 +338,7 @@ export function handleTerrainBounce(proj, terrain, onBounceAudioCallback) {
 export function calculateExplosionImpact(ex, ey, radius, maxDamage, knockbackForce, worms, projectiles, onWormDamage, onLaunchWorm, onLaunchProj) {
   // Worm impacts
   worms.forEach(worm => {
-    if (worm.health <= 0) return;
+    if (worm.isGrave) return;
     
     const dx = worm.x - ex;
     const dy = (worm.y - 4) - ey; // Center of worm body

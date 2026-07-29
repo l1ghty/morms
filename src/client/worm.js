@@ -35,7 +35,7 @@ export class Worm extends BaseWorm {
   // ─── Rendering ───────────────────────────────────────────────────────────────
 
   draw(ctx, isActive) {
-    if (this.health <= 0) {
+    if (this.isGrave) {
       // Gravestone
       ctx.fillStyle = '#64748b';
       ctx.fillRect(this.x - 5, this.y - 6, 10, 14);
@@ -107,23 +107,37 @@ export class Worm extends BaseWorm {
     ctx.stroke();
 
     // Eyes
-    ctx.fillStyle = '#ffffff';
     const eyeOffsetX = this.facingDir * 3;
     const eyeOffsetY = -4;
-    ctx.beginPath();
-    ctx.arc(this.x + eyeOffsetX, this.y + eyeOffsetY, 2.5, 0, Math.PI * 2);
-    ctx.fill();
 
-    // Pupils
-    ctx.fillStyle = '#000000';
-    const pupilX = this.x + eyeOffsetX + this.facingDir * 0.8;
-    const pupilY = this.y + eyeOffsetY + Math.sin(this.aimAngle) * 0.8;
-    ctx.beginPath();
-    ctx.arc(pupilX, pupilY, 1, 0, Math.PI * 2);
-    ctx.fill();
+    if (this.health <= 0) {
+      // Dead eyes (X X)
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 1.5;
+      const eyeX = this.x + eyeOffsetX;
+      const eyeY = this.y + eyeOffsetY;
+
+      ctx.beginPath();
+      ctx.moveTo(eyeX - 2, eyeY - 2); ctx.lineTo(eyeX + 2, eyeY + 2);
+      ctx.moveTo(eyeX + 2, eyeY - 2); ctx.lineTo(eyeX - 2, eyeY + 2);
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(this.x + eyeOffsetX, this.y + eyeOffsetY, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Pupils
+      ctx.fillStyle = '#000000';
+      const pupilX = this.x + eyeOffsetX + this.facingDir * 0.8;
+      const pupilY = this.y + eyeOffsetY + Math.sin(this.aimAngle) * 0.8;
+      ctx.beginPath();
+      ctx.arc(pupilX, pupilY, 1, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
     // Active worm indicators
-    if (isActive) {
+    if (isActive && this.health > 0) {
       const time   = performance.now() * 0.006;
       const bounce = Math.sin(time) * 4 - 24;
 
