@@ -74,7 +74,7 @@ export function resolveWormCollision(worm, terrain, endActiveTurnCallback, damag
   } else {
     let hasGround = false;
     for (let ox = -worm.halfW + 2; ox <= worm.halfW - 2; ox += 2) {
-      if (terrain.isSolid(worm.x + ox, feetY + 2.5)) {
+      if (terrain.isSolid(worm.x + ox, feetY + 4.5)) {
         hasGround = true;
         break;
       }
@@ -90,19 +90,25 @@ export function moveWorm(worm, terrain, dir, dt) {
   
   if (dir !== 0) {
     worm.facingDir = dir;
-    const newX = worm.x + dir * worm.walkSpeed * dt;
+    const baseStep = worm.walkSpeed * dt;
+    const newX = worm.x + dir * baseStep;
     const feetY = worm.y + worm.halfH;
     
+    // Increased max slope climb height (allows walking up steep crater walls & hills up to 16px step height)
+    const maxSlopeClimb = Math.max(16, Math.ceil(baseStep * 3.5));
+    const maxSlopeDescend = 16;
+    
     let climbHeight = -1;
-    const maxSlopeClimb = Math.max(8, Math.ceil(worm.walkSpeed * dt * 1.6));
     
     for (let h = 0; h <= maxSlopeClimb; h++) {
       let isClear = true;
-      const offsets = dir === 1 ? [-2, 0, 2, 4, 5] : [-5, -4, -2, 0, 2];
+      // Probe width for worm feet & body
+      const offsets = dir === 1 ? [-2, 0, 2, 4] : [-4, -2, 0, 2];
+      
+      // Check headroom / body clearance at proposed height
       for (const ox of offsets) {
-        if (terrain.isSolid(newX + ox, feetY - h) ||
-            terrain.isSolid(newX + ox, feetY - h - 8) ||
-            terrain.isSolid(newX + ox, feetY - h - 15)) {
+        if (terrain.isSolid(newX + ox, feetY - h - 6) ||
+            terrain.isSolid(newX + ox, feetY - h - 14)) {
           isClear = false;
           break;
         }
@@ -114,11 +120,17 @@ export function moveWorm(worm, terrain, dir, dt) {
     }
     
     if (climbHeight !== -1) {
-      worm.x = newX;
+      // Slope ratio (vertical rise / horizontal step)
+      const slopeRatio = climbHeight / Math.max(1, baseStep);
+      // Smooth, progressive speed reduction on inclines (flat = 1.0x, mild = ~0.65x, steep = ~0.3x)
+      const speedMult = Math.max(0.28, 1.0 / (1.0 + slopeRatio * 0.85));
+      
+      const actualX = worm.x + dir * baseStep * speedMult;
+      worm.x = actualX;
       worm.y -= climbHeight;
       
+      // Downward slope snapping: if walking downhill or flat, smoothly snap to ground surface
       if (climbHeight === 0) {
-        const maxSlopeDescend = 8;
         let foundGroundOffset = -1;
         for (let dy = 1; dy <= maxSlopeDescend; dy++) {
           let isGroundSolid = false;
