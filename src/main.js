@@ -2,6 +2,7 @@ import { Game } from './client/game.js';
 import { MapEditor } from './client/map_editor.js';
 import { CustomMapManager } from './common/custom_map_manager.js';
 import { mountDroplets } from './client/droplets.js';
+import { showConfirm } from './client/confirm_modal.js';
 
 let game = null;
 let dropletsInstance = null;
@@ -171,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
   ['delete-selected-map-btn', 'delete-lobby-map-btn'].forEach(btnId => {
     const deleteBtn = document.getElementById(btnId);
     if (!deleteBtn) return;
-    deleteBtn.addEventListener('click', () => {
+    deleteBtn.addEventListener('click', async () => {
       const selectId = btnId === 'delete-selected-map-btn' ? 'map-type-select' : 'lobby-map-type-select';
       const select = document.getElementById(selectId);
       if (!select) return;
@@ -180,7 +181,15 @@ document.addEventListener('DOMContentLoaded', () => {
       const mapObj = CustomMapManager.getMapById(mapId);
       if (!mapObj) return;
 
-      if (confirm(`Are you sure you want to remove map "${mapObj.name}"?`)) {
+      const confirmed = await showConfirm({
+        title: 'Delete Custom Map',
+        message: `Are you sure you want to remove map "${mapObj.name}"?`,
+        confirmText: 'Remove Map',
+        danger: true,
+        icon: '🗑️'
+      });
+
+      if (confirmed) {
         CustomMapManager.deleteMap(mapId);
         if (game && game.ui) game.ui.populateMapSelects();
         if (window.mapEditor) window.mapEditor.populateSavedMapsDropdown();
@@ -310,11 +319,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const editorDeleteBtn = document.getElementById('editor-delete-btn');
   if (editorDeleteBtn) {
-    editorDeleteBtn.addEventListener('click', () => {
-      if (confirm(`Are you sure you want to delete map "${mapEditor.mapName}"?`)) {
+    editorDeleteBtn.addEventListener('click', async () => {
+      const confirmed = await showConfirm({
+        title: 'Delete Map',
+        message: `Are you sure you want to delete map "${mapEditor.mapName}"?`,
+        confirmText: 'Delete Map',
+        danger: true,
+        icon: '🗑️'
+      });
+      if (confirmed) {
         mapEditor.deleteCurrentMap();
         game.ui.populateMapSelects();
-        alert('Map deleted.');
       }
     });
   }

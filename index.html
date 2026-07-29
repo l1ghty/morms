@@ -490,6 +490,19 @@
         </div>
       </div>
 
+      <!-- Custom Confirmation Modal Overlay (Hidden by default) -->
+      <div id="confirm-modal-overlay" class="screen-overlay hidden">
+        <div class="menu-card glass-panel confirm-modal-card">
+          <div id="confirm-modal-icon" class="confirm-modal-icon">⚠️</div>
+          <h2 id="confirm-modal-title">Confirm Action</h2>
+          <p id="confirm-modal-message" class="confirm-modal-message">Are you sure you want to proceed?</p>
+          <div class="confirm-modal-actions">
+            <button id="confirm-modal-cancel-btn" class="btn btn-secondary">Cancel</button>
+            <button id="confirm-modal-ok-btn" class="btn btn-primary btn-danger-confirm">Confirm</button>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
   <script type="module" src="/src/main.js"></script>

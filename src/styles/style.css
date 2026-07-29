@@ -3,6 +3,7 @@
 @import './hud.css';
 @import './handover.css';
 @import './map_editor.css';
+@import './modal.css';
 
 /* Responsive Scaling Overrides */
 @media (max-height: 600px) {

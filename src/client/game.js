@@ -9,6 +9,7 @@ import { UIManager } from './ui_manager.js';
 import { InputManager } from './input_manager.js';
 import { CustomMapManager } from '../common/custom_map_manager.js';
 import { getSafeSpawnPoint, getActiveTeamWorm, rotateActiveWorm, getRandomWindStrength } from '../common/physics.js';
+import { showConfirm } from './confirm_modal.js';
 
 export class Game {
   constructor(canvas) {
@@ -126,10 +127,17 @@ export class Game {
     this.ui.togglePauseMenu(forceState);
   }
 
-  returnToEditor(skipConfirm = false) {
+  async returnToEditor(skipConfirm = false) {
     const isGameActive = (this.state !== GameState.LOBBY && this.state !== GameState.GAME_OVER);
     if (isGameActive && !skipConfirm) {
-      if (!confirm('Are you sure you want to exit the current test match and return to the Map Editor?')) {
+      const confirmed = await showConfirm({
+        title: 'Return to Editor',
+        message: 'Are you sure you want to exit the current test match and return to the Map Editor?',
+        confirmText: 'Return to Editor',
+        danger: true,
+        icon: '🎨'
+      });
+      if (!confirmed) {
         return;
       }
     }
@@ -154,10 +162,17 @@ export class Game {
     }
   }
 
-  returnToMainMenu(skipConfirm = false) {
+  async returnToMainMenu(skipConfirm = false) {
     const isGameActive = (this.state !== GameState.LOBBY && this.state !== GameState.GAME_OVER);
     if (isGameActive && !skipConfirm) {
-      if (!confirm('Are you sure you want to exit the match and return to the Main Menu?')) {
+      const confirmed = await showConfirm({
+        title: 'Exit to Main Menu',
+        message: 'Are you sure you want to exit the match and return to the Main Menu?',
+        confirmText: 'Exit to Main Menu',
+        danger: true,
+        icon: '🏠'
+      });
+      if (!confirmed) {
         return;
       }
     }
